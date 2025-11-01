@@ -1,5 +1,4 @@
 <script setup>
-// 1. (ใหม่) Import RouterLink เพื่อให้ปุ่ม "จัดการระบบ" ทำงาน
 import { RouterLink } from 'vue-router'
 
 // 2. (ใหม่) กำหนด Props ที่จะ "รับ" มาจาก App.vue
