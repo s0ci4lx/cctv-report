@@ -291,13 +291,14 @@ const exportToExcel = () => {
   const rows = filteredReports.value.map(report => {
     const camera = getCameraInfo(report.cameraId);
     const cameraName = camera ? camera.cameraName : report.cameraId;
+    const cameraUID = camera ? camera.cameraID : report.cameraId; // 👈 แก้ตรงนี้
     const date = report.timestamp.toDate();
-    const cameraUID = camera ? camera.cameraID : report.cameraId; 
+    
     return [
       date.toLocaleDateString('th-TH'),
       date.toLocaleTimeString('th-TH'),
       cameraName,
-      cameraUID,
+      cameraUID, // 👈 ใช้ cameraUID แทน report.cameraId
       report.status === 'Normal' ? 'ปกติ' : 'มีปัญหา',
       report.notes || '-',
       getOfficerName(report.officerEmail),
@@ -527,52 +528,58 @@ onMounted(async () => {
         <div class="card-body p-4">
           <div class="flex flex-col gap-4">
             <!-- Quick Date Buttons -->
-            <div class="flex flex-wrap gap-2">
-              <button @click="setToday" class="btn btn-sm btn-outline">วันนี้</button>
-              <button @click="setYesterday" class="btn btn-sm btn-outline">เมื่อวาน</button>
-              <button @click="setThisWeek" class="btn btn-sm btn-outline">7 วันย้อนหลัง</button>
-              <button @click="setThisMonth" class="btn btn-sm btn-outline">เดือนนี้</button>
-              <button @click="clearDateFilter" class="btn btn-sm btn-ghost">ทั้งหมด</button>
+            <div>
+              <label class="label">
+                <span class="label-text font-semibold">เลือกช่วงเวลา</span>
+              </label>
+              <div class="flex flex-wrap gap-2">
+                <button @click="setToday" class="btn btn-sm btn-outline">วันนี้</button>
+                <button @click="setYesterday" class="btn btn-sm btn-outline">เมื่อวาน</button>
+                <button @click="setThisWeek" class="btn btn-sm btn-outline">7 วัน</button>
+                <button @click="setThisMonth" class="btn btn-sm btn-outline">เดือนนี้</button>
+                <button @click="clearDateFilter" class="btn btn-sm btn-ghost">ทั้งหมด</button>
+              </div>
             </div>
 
             <!-- Date Range Inputs -->
-            <div class="flex flex-col md:flex-row gap-4 items-end">
-              <div class="form-control flex-1">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div class="form-control">
                 <label class="label">
                   <span class="label-text">ตั้งแต่วันที่</span>
                 </label>
                 <input 
                   v-model="startDate" 
                   type="date" 
-                  class="input input-bordered"
+                  class="input input-bordered w-full"
                   @change="currentPage = 1"
                 />
               </div>
 
-              <div class="form-control flex-1">
+              <div class="form-control">
                 <label class="label">
                   <span class="label-text">ถึงวันที่</span>
                 </label>
                 <input 
                   v-model="endDate" 
                   type="date" 
-                  class="input input-bordered"
+                  class="input input-bordered w-full"
                   @change="currentPage = 1"
                 />
               </div>
+            </div>
 
-              <div class="form-control flex-1">
-                <label class="label">
-                  <span class="label-text">ค้นหา</span>
-                </label>
-                <input
-                  v-model="searchQuery"
-                  type="text"
-                  placeholder="ค้นหาชื่อกล้อง, UID, หมายเหตุ..."
-                  class="input input-bordered"
-                  @input="currentPage = 1"
-                />
-              </div>
+            <!-- Search Input -->
+            <div class="form-control">
+              <label class="label">
+                <span class="label-text">ค้นหา</span>
+              </label>
+              <input
+                v-model="searchQuery"
+                type="text"
+                placeholder="ค้นหาชื่อกล้อง, UID, หมายเหตุ..."
+                class="input input-bordered w-full"
+                @input="currentPage = 1"
+              />
             </div>
           </div>
         </div>
@@ -581,11 +588,27 @@ onMounted(async () => {
       <!-- Filters -->
       <div class="card bg-base-100 shadow-md mb-6">
         <div class="card-body p-4">
-          <div class="flex flex-col md:flex-row gap-4">
+          <div class="flex flex-col gap-4">
+            <div class="flex justify-between items-center">
+              <label class="label p-0">
+                <span class="label-text font-semibold">ตัวกรอง</span>
+              </label>
+              <!-- Reset Button (แสดงเฉพาะมือถือ) -->
+              <button @click="resetFilters" class="btn btn-ghost btn-sm gap-2 lg:hidden">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+                รีเซ็ต
+              </button>
+            </div>
+
             <!-- Status Filter -->
             <div class="form-control">
-              <select v-model="filterStatus" class="select select-bordered" @change="currentPage = 1">
-                <option value="all">สถานะ: ทั้งหมด ({{ reports.length }})</option>
+              <label class="label">
+                <span class="label-text">สถานะ</span>
+              </label>
+              <select v-model="filterStatus" class="select select-bordered w-full" @change="currentPage = 1">
+                <option value="all">ทั้งหมด ({{ reports.length }})</option>
                 <option value="Normal">✅ ปกติ ({{ stats.normal }})</option>
                 <option value="Issue">⚠️ มีปัญหา ({{ stats.issue }})</option>
               </select>
@@ -593,8 +616,11 @@ onMounted(async () => {
 
             <!-- Officer Filter -->
             <div class="form-control">
-              <select v-model="filterOfficer" class="select select-bordered" @change="currentPage = 1">
-                <option value="all">เจ้าหน้าที่: ทุกคน</option>
+              <label class="label">
+                <span class="label-text">เจ้าหน้าที่</span>
+              </label>
+              <select v-model="filterOfficer" class="select select-bordered w-full" @change="currentPage = 1">
+                <option value="all">ทุกคน</option>
                 <option 
                   v-for="officer in uniqueOfficers" 
                   :key="officer.email" 
@@ -606,9 +632,12 @@ onMounted(async () => {
             </div>
 
             <!-- Camera Filter -->
-            <div class="form-control flex-1">
-              <select v-model="filterCamera" class="select select-bordered" @change="currentPage = 1">
-                <option value="all">กล้อง: ทั้งหมด</option>
+            <div class="form-control">
+              <label class="label">
+                <span class="label-text">กล้อง</span>
+              </label>
+              <select v-model="filterCamera" class="select select-bordered w-full" @change="currentPage = 1">
+                <option value="all">ทั้งหมด</option>
                 <option 
                   v-for="camera in uniqueCameras" 
                   :key="camera.id" 
@@ -619,11 +648,12 @@ onMounted(async () => {
               </select>
             </div>
 
-            <!-- Reset Button -->
-            <button @click="resetFilters" class="btn btn-ghost">
+            <!-- Reset Button (แสดงเฉพาะ Desktop) -->
+            <button @click="resetFilters" class="btn btn-ghost gap-2 hidden lg:flex">
               <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
               </svg>
+              รีเซ็ตตัวกรอง
             </button>
           </div>
         </div>
@@ -648,67 +678,142 @@ onMounted(async () => {
         </div>
       </div>
 
-      <!-- Table -->
-      <div v-if="filteredReports.length > 0" class="card bg-base-100 shadow-lg overflow-hidden mb-6">
-        <div class="overflow-x-auto">
-          <table class="table table-zebra">
-            <thead class="bg-base-200">
-              <tr>
-                <th class="w-20">#</th>
-                <th>วัน-เวลา</th>
-                <th>ชื่อกล้อง</th>
-                <th>สถานะ</th>
-                <th>หมายเหตุ</th>
-                <th>ผู้รายงาน</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="(item, index) in paginatedReports" :key="item.id" class="hover">
-                <td>{{ (currentPage - 1) * itemsPerPage + index + 1 }}</td>
-                <td class="whitespace-nowrap">
-                  <div class="text-sm">{{ formatTimestamp(item.timestamp) }}</div>
-                </td>
-                <td>
-                  <div class="flex items-center gap-2">
-                    <div class="avatar placeholder">
-                      <div class="bg-primary text-primary-content rounded-full w-8">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                        </svg>
+      <!-- Table (Desktop) -->
+      <div v-if="filteredReports.length > 0" class="hidden lg:block">
+        <div class="card bg-base-100 shadow-lg overflow-hidden mb-6">
+          <div class="overflow-x-auto">
+            <table class="table table-zebra">
+              <thead class="bg-base-200">
+                <tr>
+                  <th class="w-20">#</th>
+                  <th>วัน-เวลา</th>
+                  <th>ชื่อกล้อง</th>
+                  <th>สถานะ</th>
+                  <th>หมายเหตุ</th>
+                  <th>ผู้รายงาน</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="(item, index) in paginatedReports" :key="item.id" class="hover">
+                  <td>{{ (currentPage - 1) * itemsPerPage + index + 1 }}</td>
+                  <td class="whitespace-nowrap">
+                    <div class="text-sm">{{ formatTimestamp(item.timestamp) }}</div>
+                  </td>
+                  <td>
+                    <div class="flex items-center gap-2">
+                      <div class="avatar placeholder">
+                        <div class="bg-primary text-primary-content rounded-full w-8">
+                          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                          </svg>
+                        </div>
+                      </div>
+                      <div>
+                        <div class="font-medium">{{ getCameraInfo(item.cameraId)?.cameraName || item.cameraId }}</div>
+                        <div class="text-xs text-base-content/70">{{ getCameraInfo(item.cameraId)?.cameraID || item.cameraId }}</div>
                       </div>
                     </div>
-                    <div>
-                      <div class="font-medium">{{ getCameraInfo(item.cameraId)?.cameraName || item.cameraId }}</div>
-                      <div class="text-xs text-base-content/70">{{ getCameraInfo(item.cameraId)?.cameraID || item.cameraId }}</div>
+                  </td>
+                  <td>
+                    <span v-if="item.status === 'Normal'" class="badge badge-success badge-lg gap-2">
+                      <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                      </svg>
+                      ปกติ
+                    </span>
+                    <span v-else class="badge badge-warning badge-lg gap-2">
+                      <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                      </svg>
+                      มีปัญหา
+                    </span>
+                  </td>
+                  <td>
+                    <span class="text-sm">{{ item.notes || '-' }}</span>
+                  </td>
+                  <td>
+                    <div class="text-sm">
+                      <div class="font-medium">{{ getOfficerName(item.officerEmail) }}</div>
+                      <div class="text-xs text-base-content/70">{{ item.officerEmail }}</div>
                     </div>
-                  </div>
-                </td>
-                <td>
-                  <span v-if="item.status === 'Normal'" class="badge badge-success badge-lg gap-2">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-                    </svg>
-                    ปกติ
-                  </span>
-                  <span v-else class="badge badge-warning badge-lg gap-2">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                    </svg>
-                    มีปัญหา
-                  </span>
-                </td>
-                <td>
-                  <span class="text-sm">{{ item.notes || '-' }}</span>
-                </td>
-                <td>
-                  <div class="text-sm">
-                    <div class="font-medium">{{ getOfficerName(item.officerEmail) }}</div>
-                    <div class="text-xs text-base-content/70">{{ item.officerEmail }}</div>
-                  </div>
-                </td>
-              </tr>
-            </tbody>
-          </table>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Cards (Mobile) -->
+      <div v-if="filteredReports.length > 0" class="lg:hidden space-y-4 mb-6">
+        <div 
+          v-for="(item, index) in paginatedReports" 
+          :key="item.id"
+          class="card bg-base-100 shadow-md hover:shadow-lg transition-shadow"
+        >
+          <div class="card-body p-4">
+            <!-- Header: วัน-เวลา และ สถานะ -->
+            <div class="flex justify-between items-start mb-3">
+              <div class="text-sm text-base-content/70">
+                {{ formatTimestamp(item.timestamp) }}
+              </div>
+              <span v-if="item.status === 'Normal'" class="badge badge-success gap-1">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                </svg>
+                ปกติ
+              </span>
+              <span v-else class="badge badge-warning gap-1">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+                มีปัญหา
+              </span>
+            </div>
+
+            <!-- กล้อง -->
+            <div class="flex items-start gap-3 mb-3">
+              <div class="avatar placeholder">
+                <div class="bg-primary text-primary-content rounded-full w-10">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                  </svg>
+                </div>
+              </div>
+              <div class="flex-1 min-w-0">
+                <div class="font-semibold text-base truncate">
+                  {{ getCameraInfo(item.cameraId)?.cameraName || item.cameraId }}
+                </div>
+                <div class="text-xs text-base-content/70 truncate">
+                  {{ getCameraInfo(item.cameraId)?.cameraID || item.cameraId }}
+                </div>
+              </div>
+            </div>
+
+            <!-- หมายเหตุ (ถ้ามี) -->
+            <div v-if="item.notes" class="mb-3">
+              <div class="text-xs font-semibold text-base-content/70 mb-1">หมายเหตุ:</div>
+              <div class="text-sm bg-base-200 rounded-lg p-2">
+                {{ item.notes }}
+              </div>
+            </div>
+
+            <!-- Divider -->
+            <div class="divider my-2"></div>
+
+            <!-- ผู้รายงาน -->
+            <div class="flex items-center gap-2">
+              <div class="avatar placeholder">
+                <div class="bg-neutral text-neutral-content rounded-full w-8">
+                  <span class="text-xs">{{ getOfficerName(item.officerEmail).charAt(0) }}</span>
+                </div>
+              </div>
+              <div class="flex-1 min-w-0">
+                <div class="text-sm font-medium truncate">{{ getOfficerName(item.officerEmail) }}</div>
+                <div class="text-xs text-base-content/70 truncate">{{ item.officerEmail }}</div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 

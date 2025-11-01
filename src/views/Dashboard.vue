@@ -8,7 +8,7 @@ const tasks = ref([]);
 const cameras = ref([]); // 👈 (ใหม่) รายการกล้องทั้งหมด
 const loading = ref(true);
 const submittingReport = ref(false);
-const userName = ref(auth.currentUser?.displayName || 'User');
+const userName = ref('กำลังโหลด...'); // 👈 แก้ไข: เริ่มต้นเป็น loading
 const userEmail = ref(auth.currentUser?.email);
 const searchQuery = ref('');
 const filterStatus = ref('all'); // all, reported, pending
@@ -54,7 +54,20 @@ const fetchTasks = async () => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    // --- 1. ดึงรายการกล้องทั้งหมดก่อน ---
+    // --- 1. ดึงชื่อเจ้าหน้าที่จาก officers collection (ใหม่!) ---
+    const officerQuery = query(
+      collection(db, "officers"),
+      where("email", "==", userEmail.value)
+    );
+    const officerSnapshot = await getDocs(officerQuery);
+    if (!officerSnapshot.empty) {
+      const officerData = officerSnapshot.docs[0].data();
+      userName.value = officerData.name || 'เจ้าหน้าที่';
+    } else {
+      userName.value = auth.currentUser?.displayName || 'เจ้าหน้าที่';
+    }
+
+    // --- 2. ดึงรายการกล้องทั้งหมด ---
     const camerasQuery = query(collection(db, "cameras"));
     const camerasSnapshot = await getDocs(camerasQuery);
     cameras.value = [];
@@ -62,13 +75,13 @@ const fetchTasks = async () => {
       cameras.value.push({ id: doc.id, ...doc.data() });
     });
 
-    // --- 2. ดึง Assignments ของเรา ---
+    // --- 3. ดึง Assignments ของเรา ---
     const assignmentsQuery = query(
       collection(db, "assignments"),
       where("officerEmail", "==", userEmail.value)
     );
 
-    // --- 3. ดึงรายงานวันนี้ ---
+    // --- 4. ดึงรายงานวันนี้ ---
     const reportsQuery = query(
       collection(db, "reports_log"),
       where("officerEmail", "==", userEmail.value),
@@ -80,13 +93,13 @@ const fetchTasks = async () => {
       getDocs(reportsQuery)
     ]);
 
-    // --- 4. สร้าง Set ของงานที่รายงานแล้ว ---
+    // --- 5. สร้าง Set ของงานที่รายงานแล้ว ---
     const reportedIds = new Set();
     reportsSnapshot.forEach((doc) => {
       reportedIds.add(doc.data().cameraId);
     });
 
-    // --- 5. ประมวลผลงาน (ดึงข้อมูลจาก cameras) ---
+    // --- 6. ประมวลผลงาน (ดึงข้อมูลจาก cameras) ---
     const fetchedTasks = [];
     assignmentsSnapshot.forEach((doc) => {
       const assignment = doc.data();
@@ -212,6 +225,17 @@ const openMap = (lat, lng) => {
   window.open(`https://www.google.com/maps?q=${lat},${lng}`, '_blank');
 };
 
+// (ใหม่) Copy to Clipboard
+const copyToClipboard = async (text, successMessage = 'คัดลอกแล้ว ✅') => {
+  try {
+    await navigator.clipboard.writeText(text);
+    showSuccessToast(successMessage);
+  } catch (err) {
+    console.error('Failed to copy:', err);
+    showSuccessToast('ไม่สามารถคัดลอกได้ ❌');
+  }
+};
+
 // --- Lifecycle ---
 onMounted(() => {
   fetchTasks();
@@ -290,11 +314,11 @@ onMounted(() => {
             <!-- Search Input -->
             <div class="form-control flex-1">
               <div class="input-group">
-                <!-- <span class="bg-base-200">
+                <span class="bg-base-200">
                   <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                   </svg>
-                </span> -->
+                </span>
                 <input 
                   v-model="searchQuery"
                   type="text" 
@@ -402,7 +426,13 @@ onMounted(() => {
             <!-- Camera UID -->
             <p class="text-sm text-base-content/70">
               <span class="font-semibold">UID:</span> 
-              <span class="badge badge-ghost">{{ task.cameraID }}</span>
+              <button 
+                @click="copyToClipboard(task.cameraID, `คัดลอก ${task.cameraID} แล้ว ✅`)"
+                class="badge badge-ghost hover:badge-primary transition-colors cursor-pointer"
+                title="คลิกเพื่อคัดลอก"
+              >
+                {{ task.cameraID }}
+              </button>
             </p>
 
             <!-- Location (ใหม่!) -->
