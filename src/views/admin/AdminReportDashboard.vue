@@ -285,24 +285,26 @@ const exportToExcel = () => {
     return;
   }
 
-  // สร้าง CSV
-  const headers = ['วันที่', 'เวลา', 'ชื่อกล้อง', 'Camera UID', 'สถานะ', 'หมายเหตุ', 'เจ้าหน้าที่', 'อีเมล'];
+  // สร้าง CSV (ลบ email ออก)
+  const headers = ['วันที่', 'เวลา', 'ชื่อกล้อง', 'Camera UID', 'สถานะ', 'หมายเหตุ', 'เจ้าหน้าที่'];
   
   const rows = filteredReports.value.map(report => {
     const camera = getCameraInfo(report.cameraId);
     const cameraName = camera ? camera.cameraName : report.cameraId;
-    const cameraUID = camera ? camera.cameraID : report.cameraId; // 👈 แก้ตรงนี้
+    const cameraUID = camera ? camera.cameraID : report.cameraId;
     const date = report.timestamp.toDate();
+    
+    // ลบ newline และ quote ออกจาก notes
+    const cleanNotes = (report.notes || '-').replace(/[\r\n]+/g, ' ').trim();
     
     return [
       date.toLocaleDateString('th-TH'),
       date.toLocaleTimeString('th-TH'),
       cameraName,
-      cameraUID, // 👈 ใช้ cameraUID แทน report.cameraId
+      cameraUID,
       report.status === 'Normal' ? 'ปกติ' : 'มีปัญหา',
-      report.notes || '-',
-      getOfficerName(report.officerEmail),
-      report.officerEmail
+      cleanNotes,
+      getOfficerName(report.officerEmail)
     ];
   });
 
@@ -351,7 +353,11 @@ const showToast = (message, type = 'success') => {
 const goToPage = (page) => {
   if (page >= 1 && page <= totalPages.value) {
     currentPage.value = page;
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    // Scroll ไปที่ตาราง แทนที่จะเป็นบนสุด
+    const tableElement = document.querySelector('.table');
+    if (tableElement) {
+      tableElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
   }
 };
 

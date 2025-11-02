@@ -177,6 +177,49 @@ const handleReport = async (taskId, status) => {
   }
 };
 
+// รายงานทั้งหมดปกติ
+const handleBulkReportNormal = async () => {
+  const pendingTasks = tasks.value.filter(t => !t.reportedToday);
+  
+  if (pendingTasks.length === 0) {
+    showSuccessToast('ไม่มีกล้องที่รอรายงาน');
+    return;
+  }
+
+  if (!confirm(`คุณแน่ใจหรือไม่ว่าต้องการรายงานกล้องทั้งหมด ${pendingTasks.length} ตัวเป็น "ปกติ"?`)) {
+    return;
+  }
+
+  submittingReport.value = true;
+  
+  try {
+    // สร้าง reports ทั้งหมดพร้อมกัน
+    const reportPromises = pendingTasks.map(task => 
+      addDoc(collection(db, "reports_log"), {
+        cameraId: task.id,
+        status: 'Normal',
+        notes: '',
+        officerEmail: userEmail.value,
+        timestamp: serverTimestamp()
+      })
+    );
+
+    await Promise.all(reportPromises);
+
+    // อัปเดต UI
+    pendingTasks.forEach(task => {
+      task.reportedToday = true;
+    });
+
+    showSuccessToast(`บันทึก ${pendingTasks.length} กล้องเป็นสถานะปกติแล้ว ✅`);
+  } catch (e) {
+    console.error("Failed to bulk report:", e);
+    alert("เกิดข้อผิดพลาดในการส่งรายงาน");
+  } finally {
+    submittingReport.value = false;
+  }
+};
+
 // Toast Notification
 const showSuccessToast = (message) => {
   const toast = document.createElement('div');
@@ -314,11 +357,7 @@ onMounted(() => {
             <!-- Search Input -->
             <div class="form-control flex-1">
               <div class="input-group">
-                <span class="bg-base-200">
-                  <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                  </svg>
-                </span>
+
                 <input 
                   v-model="searchQuery"
                   type="text" 
@@ -352,6 +391,19 @@ onMounted(() => {
                 เสร็จแล้ว ({{ reportedCount }})
               </a>
             </div>
+
+            <!-- Bulk Report Button (แสดงเฉพาะเมื่อมีกล้องที่ยังไม่รายงาน) -->
+            <button 
+              v-if="pendingCount > 0"
+              @click="handleBulkReportNormal" 
+              class="btn btn-success gap-2"
+              :disabled="submittingReport"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              รายงานทั้งหมดปกติ ({{ pendingCount }})
+            </button>
 
             <!-- Refresh Button -->
             <button @click="fetchTasks" class="btn btn-square btn-ghost">
@@ -425,10 +477,10 @@ onMounted(() => {
 
             <!-- Camera UID -->
             <p class="text-sm text-base-content/70">
-              <span class="font-semibold">UID:</span> 
+              <span class="font-semibold">UID: </span> 
               <button 
                 @click="copyToClipboard(task.cameraID, `คัดลอก ${task.cameraID} แล้ว ✅`)"
-                class="badge badge-ghost hover:badge-primary transition-colors cursor-pointer"
+                class="badge badge-info hover:badge-primary transition-colors cursor-pointer"
                 title="คลิกเพื่อคัดลอก"
               >
                 {{ task.cameraID }}

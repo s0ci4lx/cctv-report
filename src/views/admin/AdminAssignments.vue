@@ -599,7 +599,7 @@ onMounted(async () => {
                         `คัดลอก ${item.cameraID} แล้ว ✅`
                       )
                     "
-                    class="badge badge-primary hover:badge-primary-focus transition-colors cursor-pointer"
+                    class="badge badge-info hover:badge-primary transition-colors cursor-pointer"
                     title="คลิกเพื่อคัดลอก"
                   >
                     {{ item.cameraID }}
