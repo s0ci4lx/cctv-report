@@ -1,14 +1,14 @@
 <script setup>
 import { ref, onMounted, computed } from 'vue';
 import { auth, db } from '../firebase.js';
-import { collection, query, where, getDocs, addDoc, serverTimestamp } from "firebase/firestore";
+import { collection, query, where, getDocs, addDoc, updateDoc, doc, serverTimestamp } from "firebase/firestore";
 
 // --- State Variables ---
 const tasks = ref([]);
-const cameras = ref([]); // 👈 (ใหม่) รายการกล้องทั้งหมด
+const cameras = ref([]);
 const loading = ref(true);
 const submittingReport = ref(false);
-const userName = ref('กำลังโหลด...'); // 👈 แก้ไข: เริ่มต้นเป็น loading
+const userName = ref('กำลังโหลด...');
 const userEmail = ref(auth.currentUser?.email);
 const searchQuery = ref('');
 const filterStatus = ref('all'); // all, reported, pending
@@ -43,7 +43,7 @@ const filteredTasks = computed(() => {
 
 // --- Functions ---
 
-// (ใหม่) หาข้อมูลกล้องจาก cameraID
+// หาข้อมูลกล้องจาก cameraID
 const getCameraInfo = (cameraID) => {
   return cameras.value.find(c => c.cameraID === cameraID);
 };
@@ -54,7 +54,7 @@ const fetchTasks = async () => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    // --- 1. ดึงชื่อเจ้าหน้าที่จาก officers collection (ใหม่!) ---
+    // --- 1. ดึงชื่อเจ้าหน้าที่จาก officers collection ---
     const officerQuery = query(
       collection(db, "officers"),
       where("email", "==", userEmail.value)
@@ -93,17 +93,24 @@ const fetchTasks = async () => {
       getDocs(reportsQuery)
     ]);
 
-    // --- 5. สร้าง Set ของงานที่รายงานแล้ว ---
-    const reportedIds = new Set();
+    // --- 5. สร้าง Map ของงานที่รายงานแล้ว (เก็บข้อมูลรายงานด้วย) ---
+    const reportedData = new Map();
     reportsSnapshot.forEach((doc) => {
-      reportedIds.add(doc.data().cameraId);
+      const reportData = doc.data();
+      reportedData.set(doc.data().cameraId, {
+        reportId: doc.id,
+        status: reportData.status,
+        notes: reportData.notes || '',
+        timestamp: reportData.timestamp
+      });
     });
 
-    // --- 6. ประมวลผลงาน (ดึงข้อมูลจาก cameras) ---
+    // --- 6. ประมวลผลงาน ---
     const fetchedTasks = [];
     assignmentsSnapshot.forEach((doc) => {
       const assignment = doc.data();
       const cameraInfo = getCameraInfo(assignment.cameraID);
+      const reportInfo = reportedData.get(doc.id);
       
       // ถ้าหากล้องใน cameras collection
       if (cameraInfo) {
@@ -114,7 +121,8 @@ const fetchTasks = async () => {
           latitude: cameraInfo.latitude,
           longitude: cameraInfo.longitude,
           photoURL: cameraInfo.photoURL,
-          reportedToday: reportedIds.has(doc.id)
+          reportedToday: reportedData.has(doc.id),
+          reportData: reportInfo || null // เก็บข้อมูลรายงาน
         });
       } else {
         // ถ้าไม่เจอ (กรณีข้อมูลไม่ตรงกัน)
@@ -125,7 +133,8 @@ const fetchTasks = async () => {
           latitude: null,
           longitude: null,
           photoURL: null,
-          reportedToday: reportedIds.has(doc.id)
+          reportedToday: reportedData.has(doc.id),
+          reportData: reportInfo || null
         });
       }
     });
@@ -165,6 +174,11 @@ const handleReport = async (taskId, status) => {
     const task = tasks.value.find(t => t.id === taskId);
     if (task) {
       task.reportedToday = true;
+      task.reportData = {
+        status: status,
+        notes: notes || '',
+        timestamp: new Date() // ใช้เวลาปัจจุบันชั่วคราว
+      };
     }
 
     // แสดงข้อความสำเร็จ
@@ -175,6 +189,141 @@ const handleReport = async (taskId, status) => {
   } finally {
     submittingReport.value = false;
   }
+};
+
+// 👈 (ใหม่!) แก้ไขรายงาน
+const handleEditReport = async (task) => {
+  if (!task.reportData) return;
+  
+  submittingReport.value = true;
+  try {
+    // เปิด dialog ให้เลือกสถานะใหม่
+    const newStatus = await showEditReportDialog(task.reportData.status, task.reportData.notes);
+    if (!newStatus) {
+      submittingReport.value = false;
+      return;
+    }
+
+    // อัปเดตรายงานใน Firestore
+    const reportRef = doc(db, "reports_log", task.reportData.reportId);
+    await updateDoc(reportRef, {
+      status: newStatus.status,
+      notes: newStatus.notes || '',
+      timestamp: serverTimestamp() // อัปเดตเวลาด้วย
+    });
+
+    // อัปเดต UI
+    task.reportData.status = newStatus.status;
+    task.reportData.notes = newStatus.notes || '';
+    task.reportData.timestamp = new Date();
+
+    showSuccessToast('แก้ไขรายงานสำเร็จ ✅');
+  } catch (e) {
+    console.error("Failed to edit report:", e);
+    alert("เกิดข้อผิดพลาดในการแก้ไขรายงาน");
+  } finally {
+    submittingReport.value = false;
+  }
+};
+
+// 👈 (ใหม่!) แสดง Dialog สำหรับแก้ไขรายงาน
+const showEditReportDialog = (currentStatus, currentNotes) => {
+  return new Promise((resolve) => {
+    // สร้าง Modal สำหรับแก้ไข
+    const modal = document.createElement('dialog');
+    modal.className = 'modal';
+    modal.innerHTML = `
+      <div class="modal-box">
+        <h3 class="font-bold text-lg mb-4">แก้ไขรายงานสถานะ</h3>
+        
+        <div class="space-y-4">
+          <div>
+            <label class="label">
+              <span class="label-text font-semibold">สถานะ</span>
+            </label>
+            <div class="flex gap-4">
+              <label class="cursor-pointer">
+                <input type="radio" name="editStatus" value="Normal" class="radio radio-success" ${currentStatus === 'Normal' ? 'checked' : ''}>
+                <span class="ml-2">ปกติ</span>
+              </label>
+              <label class="cursor-pointer">
+                <input type="radio" name="editStatus" value="Issue" class="radio radio-warning" ${currentStatus === 'Issue' ? 'checked' : ''}>
+                <span class="ml-2">มีปัญหา</span>
+              </label>
+            </div>
+          </div>
+          
+          <div id="notesSection" ${currentStatus === 'Normal' ? 'style="display: none;"' : ''}>
+            <label class="label">
+              <span class="label-text font-semibold">หมายเหตุ</span>
+            </label>
+            <textarea id="editNotes" class="textarea textarea-bordered w-full" placeholder="ระบุปัญหา...">${currentNotes || ''}</textarea>
+          </div>
+        </div>
+        
+        <div class="modal-action">
+          <button id="cancelEdit" class="btn btn-ghost">ยกเลิก</button>
+          <button id="confirmEdit" class="btn btn-primary">บันทึก</button>
+        </div>
+      </div>
+      <form method="dialog" class="modal-backdrop">
+        <button type="button"></button>
+      </form>
+    `;
+    
+    document.body.appendChild(modal);
+    
+    // Event Listeners
+    const radioButtons = modal.querySelectorAll('input[name="editStatus"]');
+    const notesSection = modal.querySelector('#notesSection');
+    const notesTextarea = modal.querySelector('#editNotes');
+    const cancelBtn = modal.querySelector('#cancelEdit');
+    const confirmBtn = modal.querySelector('#confirmEdit');
+    
+    // แสดง/ซ่อน notes section
+    radioButtons.forEach(radio => {
+      radio.addEventListener('change', () => {
+        if (radio.value === 'Issue') {
+          notesSection.style.display = 'block';
+        } else {
+          notesSection.style.display = 'none';
+          notesTextarea.value = '';
+        }
+      });
+    });
+    
+    // ปุ่มยกเลิก
+    cancelBtn.addEventListener('click', () => {
+      modal.close();
+      document.body.removeChild(modal);
+      resolve(null);
+    });
+    
+    // ปุ่มบันทึก
+    confirmBtn.addEventListener('click', () => {
+      const selectedStatus = modal.querySelector('input[name="editStatus"]:checked')?.value;
+      const notes = notesTextarea.value.trim();
+      
+      if (!selectedStatus) {
+        alert('กรุณาเลือกสถานะ');
+        return;
+      }
+      
+      if (selectedStatus === 'Issue' && !notes) {
+        alert('กรุณาระบุปัญหา');
+        return;
+      }
+      
+      modal.close();
+      document.body.removeChild(modal);
+      resolve({
+        status: selectedStatus,
+        notes: selectedStatus === 'Issue' ? notes : ''
+      });
+    });
+    
+    modal.showModal();
+  });
 };
 
 // รายงานทั้งหมดปกติ
@@ -209,6 +358,11 @@ const handleBulkReportNormal = async () => {
     // อัปเดต UI
     pendingTasks.forEach(task => {
       task.reportedToday = true;
+      task.reportData = {
+        status: 'Normal',
+        notes: '',
+        timestamp: new Date()
+      };
     });
 
     showSuccessToast(`บันทึก ${pendingTasks.length} กล้องเป็นสถานะปกติแล้ว ✅`);
@@ -235,7 +389,7 @@ const showSuccessToast = (message) => {
   }, 3000);
 };
 
-// (ใหม่) เปิด Modal แสดงรูปภาพ
+// เปิด Modal แสดงรูปภาพ
 const showImageModal = (photoURL) => {
   if (!photoURL) return;
   
@@ -262,13 +416,13 @@ const showImageModal = (photoURL) => {
   });
 };
 
-// (ใหม่) เปิดแผนที่
+// เปิดแผนที่
 const openMap = (lat, lng) => {
   if (!lat || !lng) return;
   window.open(`https://www.google.com/maps?q=${lat},${lng}`, '_blank');
 };
 
-// (ใหม่) Copy to Clipboard
+// Copy to Clipboard
 const copyToClipboard = async (text, successMessage = 'คัดลอกแล้ว ✅') => {
   try {
     await navigator.clipboard.writeText(text);
@@ -357,7 +511,6 @@ onMounted(() => {
             <!-- Search Input -->
             <div class="form-control flex-1">
               <div class="input-group">
-
                 <input 
                   v-model="searchQuery"
                   type="text" 
@@ -423,7 +576,7 @@ onMounted(() => {
           class="card bg-base-100 shadow-xl hover:shadow-2xl transition-all duration-300"
           :class="{ 'border-2 border-success': task.reportedToday }"
         >
-          <!-- Camera Photo (ใหม่!) -->
+          <!-- Camera Photo -->
           <figure v-if="task.photoURL" class="relative h-48 bg-base-200 cursor-pointer" @click="showImageModal(task.photoURL)">
             <img 
               :src="task.photoURL" 
@@ -456,12 +609,33 @@ onMounted(() => {
                 </div>
               </div>
               
-              <div v-if="task.reportedToday" class="badge badge-success badge-lg gap-2">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-                </svg>
-                เสร็จแล้ว
+              <div v-if="task.reportedToday" class="flex flex-col gap-1">
+                <!-- Status Badge -->
+                <div class="badge badge-lg gap-2" 
+                     :class="task.reportData?.status === 'Normal' ? 'badge-success' : 'badge-warning'">
+                  <svg v-if="task.reportData?.status === 'Normal'" xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                  </svg>
+                  <svg v-else xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                  </svg>
+                  {{ task.reportData?.status === 'Normal' ? 'ปกติ' : 'มีปัญหา' }}
+                </div>
+                
+                <!-- 👈 (ใหม่!) Edit Button -->
+                <button 
+                  @click="handleEditReport(task)"
+                  class="btn btn-xs btn-ghost gap-1 text-info hover:bg-info hover:text-info-content"
+                  :disabled="submittingReport"
+                  title="แก้ไขรายงาน"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                  </svg>
+                  แก้ไข
+                </button>
               </div>
+              
               <div v-else class="badge badge-warning badge-lg gap-2">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -487,7 +661,15 @@ onMounted(() => {
               </button>
             </p>
 
-            <!-- Location (ใหม่!) -->
+            <!-- 👈 (ใหม่!) แสดงหมายเหตุ (ถ้ามี) -->
+            <div v-if="task.reportedToday && task.reportData?.notes" class="mt-2">
+              <p class="text-sm text-base-content/70">
+                <span class="font-semibold">หมายเหตุ: </span>
+                <span class="italic">{{ task.reportData.notes }}</span>
+              </p>
+            </div>
+
+            <!-- Location -->
             <div v-if="task.latitude && task.longitude" class="flex items-center gap-2 text-sm mt-2">
               <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-error" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
