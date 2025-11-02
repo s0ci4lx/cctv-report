@@ -17,25 +17,20 @@ const handleSignIn = async () => {
 </script>
 
 <template>
-  <div class="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-500 via-blue-500 to-cyan-400 text-gray-800">
-    <div class="bg-white/90 backdrop-blur-lg shadow-2xl rounded-3xl p-10 max-w-md w-full text-center animate-fadeIn">
-      
-      <!-- โลโก้หรือรูปภาพ -->
-      <img
-        src="https://www.appsheet.com/template/gettablefileurl?appName=Upload_Picture-2027633&tableName=Picture&fileName=Picture_Images%2F11-02-2025%2016-16-45.Picture.091702.jpg"
-        alt="CCTV logo"
-        class="mx-auto mb-6 rounded-full shadow-lg w-32 h-32 object-cover"
-      />
 
-      <h1 class="text-3xl font-bold text-gray-800 mb-2">
-        ยินดีต้อนรับ
-      </h1>
-      <p class="text-gray-600 mb-8 leading-relaxed">
+  <div class="hero bg-base-200 min-h-screen">
+  <div class="hero-content flex-col lg:flex-row-reverse">
+    <img
+      src="https://www.appsheet.com/template/gettablefileurl?appName=Upload_Picture-2027633&tableName=Picture&fileName=Picture_Images%2F11-02-2025%2016-16-45.Picture.091702.jpg"
+      class="max-w-sm rounded-lg shadow-2xl"
+    />
+    <div>
+      <h1 class="text-5xl font-bold">ยินดีต้อนรับ</h1>
+      <p class="py-6">
         ระบบรายงานสถานะกล้องวงจรปิด <br/>
         สถานีตำรวจภูธรเทพา<br/>
         กรุณาลงชื่อเข้าใช้ด้วยบัญชี Google
       </p>
-
       <!-- ปุ่ม Sign in -->
       <button
         @click="handleSignIn"
@@ -46,13 +41,9 @@ const handleSignIn = async () => {
         </svg>
         ลงชื่อเข้าใช้ด้วย Google
       </button>
-
-      <!-- ข้อความล่าง -->
-      <p class="mt-8 text-sm text-gray-500">
-        © 2025 CCTV Report System · สภ.เทพา
-      </p>
     </div>
   </div>
+</div>
 </template>
 
 <style scoped>
