@@ -1,5 +1,5 @@
 <script setup>
-import { ref, reactive, onMounted, computed } from "vue";
+import { ref, reactive, onMounted, computed, onUnmounted } from "vue";
 import { db } from "../../firebase.js";
 import {
   collection,
@@ -10,7 +10,6 @@ import {
   doc,
   query,
   orderBy,
-  where,
 } from "firebase/firestore";
 
 // --- State ---
@@ -20,6 +19,8 @@ const officersList = ref([]);
 const loading = ref(true);
 const searchQuery = ref('');
 const sortBy = ref('cameraID'); // cameraID, cameraName, status
+const viewMode = ref('cards'); // 'cards' หรือ 'table'
+const isLargeScreen = ref(true); // ตรวจจับขนาดหน้าจอ
 
 // State สำหรับฟอร์มเพิ่ม
 const newCamera = reactive({
@@ -52,6 +53,12 @@ const assignedCameras = computed(() => {
   return cameras.value.filter(c => assignedIds.has(c.cameraID)).length;
 });
 const unassignedCameras = computed(() => totalCameras.value - assignedCameras.value);
+
+// View mode ที่มีผล - บังคับเป็น cards สำหรับหน้าจอเล็ก
+const effectiveViewMode = computed(() => {
+  // สำหรับหน้าจอเล็กให้ใช้ cards เสมอ
+  return isLargeScreen.value ? viewMode.value : 'cards';
+});
 
 // กรองและค้นหา
 const filteredCameras = computed(() => {
@@ -334,15 +341,38 @@ const copyToClipboard = async (text, successMessage = "คัดลอกแล�
   }
 };
 
+// ตรวจจับการเปลี่ยนขนาดหน้าจอ
+const updateScreenSize = () => {
+  if (typeof window !== 'undefined') {
+    isLargeScreen.value = window.innerWidth >= 1024;
+  }
+};
+
 // --- Lifecycle ---
 onMounted(async () => {
   loading.value = true;
+  
+  // ตั้งค่าขนาดหน้าจอครั้งแรก
+  updateScreenSize();
+  
+  // เพิ่ม event listener สำหรับการ resize
+  if (typeof window !== 'undefined') {
+    window.addEventListener('resize', updateScreenSize);
+  }
+  
   await Promise.all([
     fetchCameras(),
     fetchAssignments(),
     fetchOfficers()
   ]);
   loading.value = false;
+});
+
+// Cleanup event listener
+onUnmounted(() => {
+  if (typeof window !== 'undefined') {
+    window.removeEventListener('resize', updateScreenSize);
+  }
 });
 </script>
 
@@ -415,20 +445,17 @@ onMounted(async () => {
       </div>
     </div>
 
-    <!-- Search & Sort -->
+    <!-- Search & Sort Bar -->
     <div class="card bg-base-100 shadow-md mb-6">
       <div class="card-body p-4">
         <div class="flex flex-col md:flex-row gap-4">
           <div class="form-control flex-1">
-            <div class="input-group">
-
-              <input
-                v-model="searchQuery"
-                type="text"
-                placeholder="ค้นหา UID หรือจุดติดตั้ง..."
-                class="input input-bordered flex-1"
-              />
-            </div>
+            <input
+              v-model="searchQuery"
+              type="text"
+              placeholder="ค้นหา UID หรือจุดติดตั้ง..."
+              class="input input-bordered flex-1"
+            />
           </div>
 
           <div class="form-control">
@@ -437,6 +464,32 @@ onMounted(async () => {
               <option value="cameraName">เรียงตาม: จุดติดตั้ง</option>
               <option value="status">เรียงตาม: สถานะ</option>
             </select>
+          </div>
+
+          <!-- ปุ่มสลับ View (เฉพาะหน้าจอใหญ่) -->
+          <div v-if="isLargeScreen" class="form-control">
+            <div class="join">
+              <button 
+                class="join-item btn btn-sm gap-2" 
+                :class="{ 'btn-active': viewMode === 'cards' }"
+                @click="viewMode = 'cards'"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+                </svg>
+                การ์ด
+              </button>
+              <button 
+                class="join-item btn btn-sm gap-2" 
+                :class="{ 'btn-active': viewMode === 'table' }"
+                @click="viewMode = 'table'"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16" />
+                </svg>
+                ตาราง
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -447,8 +500,116 @@ onMounted(async () => {
       <span class="loading loading-spinner loading-lg text-primary"></span>
     </div>
 
-    <!-- Camera Grid -->
-    <div v-else-if="filteredCameras.length > 0" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    <!-- Table View (เฉพาะหน้าจอใหญ่) -->
+    <div v-else-if="!loading && filteredCameras.length > 0 && effectiveViewMode === 'table' && isLargeScreen" class="block">
+      <div class="card bg-base-100 shadow-lg overflow-hidden">
+        <div class="overflow-x-auto">
+          <table class="table table-zebra">
+            <thead class="bg-base-200">
+              <tr>
+                <th class="w-20">รูปภาพ</th>
+                <th>Camera UID</th>
+                <th>จุดติดตั้ง</th>
+                <th>สถานะ</th>
+                <th>เจ้าหน้าที่</th>
+                <th>พิกัด</th>
+                <th class="text-center">จัดการ</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="camera in filteredCameras" :key="camera.id" class="hover">
+                <td>
+                  <div class="avatar">
+                    <div class="w-16 h-16 rounded-lg">
+                      <img 
+                        v-if="camera.photoURL"
+                        :src="camera.photoURL" 
+                        :alt="camera.cameraName"
+                        class="w-full h-full object-cover cursor-pointer"
+                        @click="openImagePreview(camera.photoURL)"
+                        @error="(e) => e.target.style.display = 'none'"
+                      />
+                      <div v-else class="w-full h-full bg-base-200 flex items-center justify-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-base-content/30" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                      </div>
+                    </div>
+                  </div>
+                </td>
+                <td>
+                  <button
+                    @click="copyToClipboard(camera.cameraID, `คัดลอก ${camera.cameraID} แล้ว ✅`)"
+                    class="badge badge-info hover:badge-primary transition-colors cursor-pointer"
+                    title="คลิกเพื่อคัดลอก"
+                  >
+                    {{ camera.cameraID }}
+                  </button>
+                </td>
+                <td>
+                  <div class="font-bold">{{ camera.cameraName }}</div>
+                </td>
+                <td>
+                  <div class="badge badge-lg gap-2" :class="isAssigned(camera.cameraID) ? 'badge-success' : 'badge-warning'">
+                    <svg v-if="isAssigned(camera.cameraID)" xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                    </svg>
+                    <svg v-else xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    {{ isAssigned(camera.cameraID) ? 'มอบหมายแล้ว' : 'ยังไม่มอบหมาย' }}
+                  </div>
+                </td>
+                <td>
+                  <span v-if="isAssigned(camera.cameraID)" class="text-sm">
+                    {{ getAssignedOfficer(camera.cameraID) }}
+                  </span>
+                  <span v-else class="text-base-content/50 text-sm">-</span>
+                </td>
+                <td>
+                  <div v-if="camera.latitude && camera.longitude" class="flex items-center gap-2 text-sm">
+                    <button 
+                      @click="openMap(camera.latitude, camera.longitude)"
+                      class="link link-primary text-xs flex items-center gap-1"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 text-error" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                      </svg>
+                      {{ camera.latitude.toFixed(4) }}, {{ camera.longitude.toFixed(4) }}
+                    </button>
+                  </div>
+                  <span v-else class="text-base-content/50 text-sm">-</span>
+                </td>
+                <td class="text-center">
+                  <div class="join">
+                    <button @click="openEditModal(camera)" class="btn btn-warning btn-xs gap-1 join-item">
+                      <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                      </svg>
+                      แก้ไข
+                    </button>
+                    <button 
+                      @click="handleDeleteCamera(camera.id, camera.cameraID, camera.cameraName)" 
+                      class="btn btn-error btn-xs gap-1 join-item"
+                      :disabled="isAssigned(camera.cameraID)"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                      </svg>
+                      ลบ
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Card View -->
+    <div v-else-if="!loading && filteredCameras.length > 0" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
       <div
         v-for="camera in filteredCameras"
         :key="camera.id"
@@ -556,7 +717,7 @@ onMounted(async () => {
     </div>
 
     <!-- Empty State -->
-    <div v-else class="text-center py-20">
+    <div v-else-if="!loading && filteredCameras.length === 0" class="text-center py-20">
       <svg xmlns="http://www.w3.org/2000/svg" class="h-24 w-24 mx-auto text-base-content/30 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
       </svg>
@@ -864,5 +1025,14 @@ figure img {
 
 figure:hover img {
   transform: scale(1.05);
+}
+
+.table tbody tr:hover {
+  background-color: hsl(var(--b2) / 0.5);
+}
+
+.join input[type="radio"]:checked {
+  background-color: hsl(var(--p));
+  color: hsl(var(--pc));
 }
 </style>
