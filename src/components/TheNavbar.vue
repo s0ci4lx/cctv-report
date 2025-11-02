@@ -61,9 +61,9 @@ const isDashboardPage = computed(() => {
         CCTV Daily Report
       </a>
 
-      <!-- ปุ่ม Dashboard (แสดงเมื่อไม่อยู่หน้า Dashboard) -->
+      <!-- ปุ่ม Dashboard (แสดงเมื่อไม่อยู่หน้า Dashboard และ Login แล้ว) -->
       <RouterLink
-        v-if="!isDashboardPage"
+        v-if="!isDashboardPage && isLoggedIn"
         to="/"
         class="btn btn-sm btn-outline btn-primary ml-4 gap-2"
       >
@@ -156,7 +156,10 @@ const isDashboardPage = computed(() => {
           </svg>
           Admin
         </div>
-        <div class="badge badge-secondary gap-2 hidden md:flex" v-else-if="isInspector">
+        <div
+          class="badge badge-secondary gap-2 hidden md:flex"
+          v-else-if="isInspector"
+        >
           <svg
             xmlns="http://www.w3.org/2000/svg"
             class="h-3 w-3"

@@ -27,11 +27,11 @@ onMounted(() => {
     if (user) {
       isLoggedIn.value = true;
       try {
-        // เช็ค Admin ด้วย Email (ไม่ใช่ UID)
+        // เช็ค Admin ด้วย Email
         const adminDoc = await getDoc(doc(db, "admins", user.email));
         isAdmin.value = adminDoc.exists();
         
-        // เช็ค Inspector ด้วย Email (ถ้าไม่ใช่ Admin)
+        // เช็ค Inspector ด้วย Email
         if (!isAdmin.value) {
           const inspectorDoc = await getDoc(doc(db, "inspectors", user.email));
           isInspector.value = inspectorDoc.exists();
@@ -49,6 +49,7 @@ onMounted(() => {
         router.push('/');
       }
     } else {
+      // user logged out
       isLoggedIn.value = false;
       isAdmin.value = false;
       isInspector.value = false;

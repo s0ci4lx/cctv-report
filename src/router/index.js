@@ -115,13 +115,13 @@ router.beforeEach(async (to, from, next) => {
   
   if (currentUser) {
     try {
-      // เช็ค Admin ด้วย Email (ไม่ใช่ UID)
+      // เช็ค Admin ด้วย Email (แทน UID)
       const adminDoc = await getDoc(doc(db, "admins", currentUser.email));
       if (adminDoc.exists()) {
         isAdmin = true;
       }
       
-      // เช็ค Inspector ด้วย Email (ถ้าไม่ใช่ Admin)
+      // เช็ค Inspector ด้วย Email
       if (!isAdmin) {
         const inspectorDoc = await getDoc(doc(db, "inspectors", currentUser.email));
         if (inspectorDoc.exists()) {
