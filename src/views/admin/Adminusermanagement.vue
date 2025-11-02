@@ -546,7 +546,7 @@ onMounted(async () => {
             <input 
               v-model="searchQuery"
               type="text" 
-              placeholder="ค้นหาชื่อหรือ email..." 
+              placeholder="ค้นหาชื่อ หรือ email..." 
               class="input input-bordered"
             />
           </div>
