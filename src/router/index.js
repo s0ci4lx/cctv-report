@@ -8,10 +8,14 @@ import { db } from "../firebase.js";
 const Login = () => import("../views/Login.vue");
 const Dashboard = () => import("../views/Dashboard.vue");
 const AdminLayout = () => import("../views/AdminLayout.vue");
+const InspectorLayout = () => import("../views/InspectorLayout.vue");
 const AdminReportDashboard = () => import("../views/admin/AdminReportDashboard.vue");
 const AdminAssignments = () => import("../views/admin/AdminAssignments.vue");
 const AdminOfficers = () => import('../views/admin/AdminOfficers.vue');
-const AdminCameras = () => import('../views/admin/AdminCameras.vue'); // 👈 (ใหม่!)
+const AdminCameras = () => import('../views/admin/AdminCameras.vue');
+const AdminUserManagement = () => import('../views/admin/AdminUserManagement.vue'); // ใหม่!
+const InspectorReports = () => import('../views/inspector/InspectorReports.vue');
+const InspectorCameras = () => import('../views/inspector/InspectorCameras.vue');
 
 // 2. กำหนด "เส้นทาง" (Routes)
 const routes = [
@@ -39,7 +43,7 @@ const routes = [
         component: AdminReportDashboard,
       },
       {
-        path: "cameras", // 👈 (ใหม่!) Path: /admin/cameras
+        path: "cameras",
         name: "AdminCameras",
         component: AdminCameras,
       },
@@ -52,6 +56,29 @@ const routes = [
         path: "officers",
         name: "AdminOfficers",
         component: AdminOfficers,
+      },
+      {
+        path: "users", // ใหม่!
+        name: "AdminUserManagement",
+        component: AdminUserManagement,
+      },
+    ],
+  },
+  {
+    path: "/inspector",
+    component: InspectorLayout,
+    meta: { requiresAuth: true, requiresInspector: true },
+    redirect: "/inspector/reports",
+    children: [
+      {
+        path: "reports",
+        name: "InspectorReports",
+        component: InspectorReports,
+      },
+      {
+        path: "cameras",
+        name: "InspectorCameras",
+        component: InspectorCameras,
       },
     ],
   },
@@ -80,18 +107,29 @@ const getCurrentUser = () => {
 router.beforeEach(async (to, from, next) => {
   const requiresAuth = to.matched.some((record) => record.meta.requiresAuth);
   const requiresAdmin = to.matched.some((record) => record.meta.requiresAdmin);
+  const requiresInspector = to.matched.some((record) => record.meta.requiresInspector);
   const currentUser = await getCurrentUser();
-
+  
   let isAdmin = false;
-
+  let isInspector = false;
+  
   if (currentUser) {
     try {
-      const adminDoc = await getDoc(doc(db, "admins", currentUser.uid));
-      if (adminDoc.exists() && adminDoc.data().isAdmin === true) {
+      // เช็ค Admin ด้วย Email (ไม่ใช่ UID)
+      const adminDoc = await getDoc(doc(db, "admins", currentUser.email));
+      if (adminDoc.exists()) {
         isAdmin = true;
       }
+      
+      // เช็ค Inspector ด้วย Email (ถ้าไม่ใช่ Admin)
+      if (!isAdmin) {
+        const inspectorDoc = await getDoc(doc(db, "inspectors", currentUser.email));
+        if (inspectorDoc.exists()) {
+          isInspector = true;
+        }
+      }
     } catch (e) {
-      console.error("Error checking admin status:", e);
+      console.error("Error checking user roles:", e);
     }
   }
 
@@ -101,6 +139,9 @@ router.beforeEach(async (to, from, next) => {
     next("/");
   } else if (requiresAdmin && !isAdmin) {
     console.warn("Access Denied: User is not an admin.");
+    next("/");
+  } else if (requiresInspector && !isInspector) {
+    console.warn("Access Denied: User is not an inspector.");
     next("/");
   } else {
     next();

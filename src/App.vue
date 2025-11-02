@@ -1,42 +1,48 @@
 <script setup>
-// 1. (อัปเดต) เราไม่ต้องการ RouterLink ที่นี่อีกแล้ว (มันย้ายไป Navbar)
 import { RouterView, useRouter } from 'vue-router' 
 import { onMounted, ref } from 'vue'
 import { getAuth, onAuthStateChanged, signOut } from "firebase/auth";
-import { auth, db } from './firebase.js'; // (db ถูก import มา แต่ยังไม่ได้ใช้ในนี้)
+import { auth, db } from './firebase.js';
 import { doc, getDoc } from "firebase/firestore";
-
-// 2. (ใหม่) Import Navbar Component ที่เราเพิ่งสร้าง
 import TheNavbar from './components/TheNavbar.vue'
 
 const router = useRouter();
 const isLoggedIn = ref(false);
 const isAdmin = ref(false);
+const isInspector = ref(false);
 
-// 3. (สำคัญ) ฟังก์ชัน handleLogout "ยังคงอยู่ที่นี่" (App.vue)
-// เพราะ App.vue เป็นผู้ควบคุม Auth และ Router หลัก
 const handleLogout = () => {
   signOut(auth).then(() => {
     isLoggedIn.value = false;
     isAdmin.value = false;
+    isInspector.value = false;
     router.push('/login');
   }).catch((error) => {
     console.error("Logout error:", error);
   });
 };
 
-// 4. onMounted (เหมือนเดิมทุกอย่าง)
-// มันจะคอยอัปเดต isLoggedIn และ isAdmin
 onMounted(() => {
   onAuthStateChanged(auth, async (user) => { 
     if (user) {
       isLoggedIn.value = true;
       try {
-        const adminDoc = await getDoc(doc(db, "admins", user.uid));
-        isAdmin.value = adminDoc.exists() && adminDoc.data().isAdmin === true;
+        // เช็ค Admin ด้วย Email (ไม่ใช่ UID)
+        const adminDoc = await getDoc(doc(db, "admins", user.email));
+        isAdmin.value = adminDoc.exists();
+        
+        // เช็ค Inspector ด้วย Email (ถ้าไม่ใช่ Admin)
+        if (!isAdmin.value) {
+          const inspectorDoc = await getDoc(doc(db, "inspectors", user.email));
+          isInspector.value = inspectorDoc.exists();
+        } else {
+          isInspector.value = false;
+        }
+        
       } catch (e) {
-        console.error("Error checking admin status:", e);
+        console.error("Error checking user roles:", e);
         isAdmin.value = false;
+        isInspector.value = false;
       }
       
       if (router.currentRoute.value.path === '/login') {
@@ -45,6 +51,7 @@ onMounted(() => {
     } else {
       isLoggedIn.value = false;
       isAdmin.value = false;
+      isInspector.value = false;
       if (router.currentRoute.value.path !== '/login') {
         router.push('/login');
       }
@@ -55,16 +62,15 @@ onMounted(() => {
 
 <template>
   <div class="min-h-screen bg-base-200">
-    
     <TheNavbar 
       :isLoggedIn="isLoggedIn" 
       :isAdmin="isAdmin" 
+      :isInspector="isInspector"
       @logout="handleLogout" 
     />
     
     <main class="container mx-auto px-4">
       <RouterView />
     </main>
-
   </div>
 </template>
