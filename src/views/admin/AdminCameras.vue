@@ -540,7 +540,7 @@ onUnmounted(() => {
                 <td>
                   <button
                     @click="copyToClipboard(camera.cameraID, `คัดลอก ${camera.cameraID} แล้ว ✅`)"
-                    class="badge badge-info hover:badge-primary transition-colors cursor-pointer"
+                    class="btn btn-soft btn-primary btn-sm hover:badge-primary transition-colors cursor-pointer"
                     title="คลิกเพื่อคัดลอก"
                   >
                     {{ camera.cameraID }}
@@ -550,7 +550,7 @@ onUnmounted(() => {
                   <div class="font-bold">{{ camera.cameraName }}</div>
                 </td>
                 <td>
-                  <div class="badge badge-lg gap-2" :class="isAssigned(camera.cameraID) ? 'badge-success' : 'badge-warning'">
+                  <div class="badge badge-md gap-2" :class="isAssigned(camera.cameraID) ? 'badge-success' : 'badge-warning'">
                     <svg v-if="isAssigned(camera.cameraID)" xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
                     </svg>
@@ -665,7 +665,7 @@ onUnmounted(() => {
                         `คัดลอก ${camera.cameraID} แล้ว ✅`
                       )
                     "
-                    class="badge badge-info hover:badge-primary transition-colors cursor-pointer"
+                    class="btn btn-soft btn-primary btn-sm hover:badge-primary transition-colors cursor-pointer"
                     title="คลิกเพื่อคัดลอก"
                   >
                     {{ camera.cameraID }}

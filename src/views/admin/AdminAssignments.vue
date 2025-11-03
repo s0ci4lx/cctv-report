@@ -599,7 +599,7 @@ onMounted(async () => {
                         `คัดลอก ${item.cameraID} แล้ว ✅`
                       )
                     "
-                    class="badge badge-info hover:badge-primary transition-colors cursor-pointer"
+                    class="btn btn-soft btn-primary btn-sm  hover:badge-primary transition-colors cursor-pointer"
                     title="คลิกเพื่อคัดลอก"
                   >
                     {{ item.cameraID }}
@@ -740,7 +740,7 @@ onMounted(async () => {
                     `คัดลอก ${item.cameraID} แล้ว ✅`
                   )
                 "
-                class="badge badge-primary hover:badge-secondary transition-colors cursor-pointer"
+                class="btn btn-soft btn-primary hover:badge-secondary transition-colors cursor-pointer"
                 title="คลิกเพื่อคัดลอก"
               >
                 {{ item.cameraID }}
