@@ -546,13 +546,13 @@ onMounted(async () => {
             <input 
               v-model="searchQuery"
               type="text" 
-              placeholder="ค้นหาชื่อ หรือ email..." 
+              placeholder="ค้นหาชื่อหรือ email..." 
               class="input input-bordered"
             />
           </div>
 
-          <!-- Officers List -->
-          <div class="overflow-x-auto">
+          <!-- Desktop Table View (แสดงเฉพาะใน desktop) -->
+          <div class="overflow-x-auto hidden md:block">
             <table class="table table-zebra">
               <thead>
                 <tr>
@@ -592,6 +592,68 @@ onMounted(async () => {
                 </tr>
               </tbody>
             </table>
+          </div>
+
+          <!-- Mobile Card View (แสดงเฉพาะใน mobile) -->
+          <div class="grid grid-cols-1 gap-3 md:hidden">
+            <div 
+              v-for="officer in filteredOfficers" 
+              :key="officer.email"
+              class="card bg-base-200 compact"
+            >
+              <div class="card-body">
+                <div class="flex items-start justify-between">
+                  <div class="flex items-center gap-3 flex-1">
+                    <div class="avatar placeholder">
+                      <div class="bg-neutral text-neutral-content rounded-full w-10">
+                        <span class="text-xs">{{ officer.name?.charAt(0) || '?' }}</span>
+                      </div>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                      <div class="font-semibold truncate">{{ officer.name }}</div>
+                      <div class="text-sm text-base-content/70 truncate">{{ officer.email }}</div>
+                      <div class="mt-1">
+                        <span class="badge badge-sm" :class="getRoleBadgeClass(getOfficerRole(officer.email))">
+                          {{ getOfficerRole(officer.email) }}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                
+                <!-- Action Buttons -->
+                <div class="flex gap-2 mt-3">
+                  <button 
+                    @click="selectOfficerForInspector(officer)"
+                    class="btn btn-xs btn-secondary flex-1"
+                    :disabled="getOfficerRole(officer.email).includes('Inspector')"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>
+                    Inspector
+                  </button>
+                  <button 
+                    @click="selectOfficerForAdmin(officer)"
+                    class="btn btn-xs btn-info flex-1"
+                    :disabled="getOfficerRole(officer.email).includes('Admin')"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.25-2.25l-7.5 7.5L4.5 12" />
+                    </svg>
+                    Admin
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Empty State for Mobile -->
+            <div v-if="filteredOfficers.length === 0" class="text-center py-8 text-base-content/50">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 mx-auto mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+              </svg>
+              <p>ไม่พบเจ้าหน้าที่ที่ค้นหา</p>
+            </div>
           </div>
         </div>
       </div>

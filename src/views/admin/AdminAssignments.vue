@@ -740,7 +740,7 @@ onMounted(async () => {
                     `คัดลอก ${item.cameraID} แล้ว ✅`
                   )
                 "
-                class="badge badge-primary hover:badge-primary-focus transition-colors cursor-pointer"
+                class="badge badge-primary hover:badge-secondary transition-colors cursor-pointer"
                 title="คลิกเพื่อคัดลอก"
               >
                 {{ item.cameraID }}
@@ -796,6 +796,7 @@ onMounted(async () => {
                     d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
                   />
                 </svg>
+                
                 {{ getCameraInfo(item.cameraID).latitude.toFixed(4) }},
                 {{ getCameraInfo(item.cameraID).longitude.toFixed(4) }}
               </div>
