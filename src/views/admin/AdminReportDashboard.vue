@@ -219,29 +219,39 @@ const fetchData = async () => {
   }
 };
 
-// ตั้งค่าวันที่เริ่มต้น (7 วันย้อนหลัง)
+// [ใหม่] ฟังก์ชันสำหรับรับวันที่ในรูปแบบ YYYY-MM-DD ตามเวลาท้องถิ่น (แก้ไขปัญหา Timezone Shift)
+const getLocalISODate = (date) => {
+  // สร้างวันที่ที่เลื่อนไปตาม Timezone Offset เพื่อให้ toISOString() ไม่ปัดวันกลับ
+  const offset = date.getTimezoneOffset() * 60000; // แปลงนาทีเป็นมิลลิวินาที
+  const localTime = new Date(date.getTime() - offset);
+  return localTime.toISOString().split('T')[0]; // จะได้ "2025-11-06" แทนที่จะเป็น "2025-11-05"
+};
+
+// ตั้งค่าวันที่เริ่มต้น (7 วันย้อนหลัง) - ปรับปรุงแล้ว
 const setDefaultDateRange = () => {
   const today = new Date();
   const sevenDaysAgo = new Date(today);
   sevenDaysAgo.setDate(today.getDate() - 7);
   
-  endDate.value = today.toISOString().split('T')[0];
-  startDate.value = sevenDaysAgo.toISOString().split('T')[0];
+  endDate.value = getLocalISODate(today); // <--- ใช้ getLocalISODate
+  startDate.value = getLocalISODate(sevenDaysAgo); // <--- ใช้ getLocalISODate
 };
 
 // Quick Date Filters
 const setToday = () => {
   const today = new Date();
-  startDate.value = today.toISOString().split('T')[0];
-  endDate.value = today.toISOString().split('T')[0];
+  // แก้ไข: ใช้ getLocalISODate เพื่อป้องกัน Timezone Shift
+  startDate.value = getLocalISODate(today);
+  endDate.value = getLocalISODate(today);
   currentPage.value = 1;
 };
 
 const setYesterday = () => {
   const yesterday = new Date();
   yesterday.setDate(yesterday.getDate() - 1);
-  startDate.value = yesterday.toISOString().split('T')[0];
-  endDate.value = yesterday.toISOString().split('T')[0];
+  // แก้ไข: ใช้ getLocalISODate เพื่อป้องกัน Timezone Shift
+  startDate.value = getLocalISODate(yesterday);
+  endDate.value = getLocalISODate(yesterday);
   currentPage.value = 1;
 };
 
@@ -249,16 +259,18 @@ const setThisWeek = () => {
   const today = new Date();
   const weekAgo = new Date(today);
   weekAgo.setDate(today.getDate() - 7);
-  startDate.value = weekAgo.toISOString().split('T')[0];
-  endDate.value = today.toISOString().split('T')[0];
+  // แก้ไข: ใช้ getLocalISODate เพื่อป้องกัน Timezone Shift
+  startDate.value = getLocalISODate(weekAgo);
+  endDate.value = getLocalISODate(today);
   currentPage.value = 1;
 };
 
 const setThisMonth = () => {
   const today = new Date();
   const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
-  startDate.value = firstDay.toISOString().split('T')[0];
-  endDate.value = today.toISOString().split('T')[0];
+  // แก้ไข: ใช้ getLocalISODate เพื่อป้องกัน Timezone Shift
+  startDate.value = getLocalISODate(firstDay);
+  endDate.value = getLocalISODate(today);
   currentPage.value = 1;
 };
 
