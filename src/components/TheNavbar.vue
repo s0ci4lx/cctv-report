@@ -39,8 +39,8 @@ const isDashboardPage = computed(() => {
 </script>
 
 <template>
-  <div class="navbar bg-base-100 shadow-md mb-4 ">
-    <div class="flex-1 mx-4 md:mx-8 lg:mx-12 flex items-center">
+  <div class="navbar bg-base-100 shadow-md mb-4 px-4 md:px-8 lg:px-12">
+    <div class="flex-1 flex items-center">
       <!-- Title -->
       <a class="btn btn-ghost text-lg md:text-xl gap-2">
         <svg
@@ -144,7 +144,7 @@ const isDashboardPage = computed(() => {
         <div v-if="isLoggedIn" class="flex items-center gap-3">
           <!-- Mobile Hamburger Menu (แสดงเฉพาะใน mobile) -->
           <div class="dropdown dropdown-end md:hidden">
-            <div tabindex="0" role="button" class="btn btn-ghost btn-circle">
+            <div tabindex="0" role="button" class="btn btn-soft hover:btn-secondary btn-circle">
               <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h7" />
               </svg>
@@ -162,7 +162,7 @@ const isDashboardPage = computed(() => {
             </li>
             <div class="divider my-2"></div>
             <li v-if="!isDashboardPage">
-              <RouterLink to="/" class="gap-3">
+              <RouterLink to="/" class="gap-3 hover:bg-secondary">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
                 </svg>
