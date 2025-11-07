@@ -16,6 +16,7 @@ const AdminCameras = () => import('../views/admin/AdminCameras.vue');
 const AdminUserManagement = () => import('../views/admin/AdminUserManagement.vue'); // ใหม่!
 const InspectorReports = () => import('../views/inspector/InspectorReports.vue');
 const InspectorCameras = () => import('../views/inspector/InspectorCameras.vue');
+const AdminCameraMap = () => import('../views/admin/AdminCameraMap.vue');
 
 // 2. กำหนด "เส้นทาง" (Routes)
 const routes = [
@@ -62,6 +63,11 @@ const routes = [
         name: "AdminUserManagement",
         component: AdminUserManagement,
       },
+      {
+  path: "map",
+  name: "AdminCameraMap",
+  component: AdminCameraMap,
+},
     ],
   },
   {
