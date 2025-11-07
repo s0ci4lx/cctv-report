@@ -422,7 +422,7 @@ onBeforeUnmount(() => {
 
             <div class="form-control w-full md:w-auto md:flex-row md:items-center md:gap-2">
               <label class="label md:p-0">
-                <span class="label-text font-semibold pe-2 ps-2">สถานะ</span>
+                <span class="label-text font-semibold pe-2">สถานะ</span>
               </label>
               <select v-model="filterStatus" class="select select-bordered w-full md:w-auto">
                 <option value="all">ทั้งหมด ({{ stats.total }})</option>

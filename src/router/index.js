@@ -9,14 +9,20 @@ const Login = () => import("../views/Login.vue");
 const Dashboard = () => import("../views/Dashboard.vue");
 const AdminLayout = () => import("../views/AdminLayout.vue");
 const InspectorLayout = () => import("../views/InspectorLayout.vue");
-const AdminReportDashboard = () => import("../views/admin/AdminReportDashboard.vue");
+const AdminReportDashboard = () =>
+  import("../views/admin/AdminReportDashboard.vue");
 const AdminAssignments = () => import("../views/admin/AdminAssignments.vue");
-const AdminOfficers = () => import('../views/admin/AdminOfficers.vue');
-const AdminCameras = () => import('../views/admin/AdminCameras.vue');
-const AdminUserManagement = () => import('../views/admin/AdminUserManagement.vue'); // ใหม่!
-const InspectorReports = () => import('../views/inspector/InspectorReports.vue');
-const InspectorCameras = () => import('../views/inspector/InspectorCameras.vue');
-const AdminCameraMap = () => import('../views/admin/AdminCameraMap.vue');
+const AdminOfficers = () => import("../views/admin/AdminOfficers.vue");
+const AdminCameras = () => import("../views/admin/AdminCameras.vue");
+const AdminUserManagement = () =>
+  import("../views/admin/AdminUserManagement.vue"); // ใหม่!
+const InspectorReports = () =>
+  import("../views/inspector/InspectorReports.vue");
+const InspectorCameras = () =>
+  import("../views/inspector/InspectorCameras.vue");
+const AdminCameraMap = () => import("../views/admin/AdminCameraMap.vue");
+const InspectorCameraMap = () =>
+  import("../views/inspector/InspectorCameraMap.vue");
 
 // 2. กำหนด "เส้นทาง" (Routes)
 const routes = [
@@ -64,10 +70,10 @@ const routes = [
         component: AdminUserManagement,
       },
       {
-  path: "map",
-  name: "AdminCameraMap",
-  component: AdminCameraMap,
-},
+        path: "map",
+        name: "AdminCameraMap",
+        component: AdminCameraMap,
+      },
     ],
   },
   {
@@ -85,6 +91,11 @@ const routes = [
         path: "cameras",
         name: "InspectorCameras",
         component: InspectorCameras,
+      },
+      {
+        path: "map", // 👈 เพิ่มใหม่
+        name: "InspectorCameraMap",
+        component: InspectorCameraMap,
       },
     ],
   },
@@ -113,12 +124,14 @@ const getCurrentUser = () => {
 router.beforeEach(async (to, from, next) => {
   const requiresAuth = to.matched.some((record) => record.meta.requiresAuth);
   const requiresAdmin = to.matched.some((record) => record.meta.requiresAdmin);
-  const requiresInspector = to.matched.some((record) => record.meta.requiresInspector);
+  const requiresInspector = to.matched.some(
+    (record) => record.meta.requiresInspector
+  );
   const currentUser = await getCurrentUser();
-  
+
   let isAdmin = false;
   let isInspector = false;
-  
+
   if (currentUser) {
     try {
       // เช็ค Admin ด้วย Email (แทน UID)
@@ -126,10 +139,12 @@ router.beforeEach(async (to, from, next) => {
       if (adminDoc.exists()) {
         isAdmin = true;
       }
-      
+
       // เช็ค Inspector ด้วย Email
       if (!isAdmin) {
-        const inspectorDoc = await getDoc(doc(db, "inspectors", currentUser.email));
+        const inspectorDoc = await getDoc(
+          doc(db, "inspectors", currentUser.email)
+        );
         if (inspectorDoc.exists()) {
           isInspector = true;
         }
