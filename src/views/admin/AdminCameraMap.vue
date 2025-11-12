@@ -198,7 +198,7 @@ const updateMarkers = () => {
           </div>
         </div>
         
-        <h3 class="font-bold text-lg mb-2">${camera.cameraName}</h3>
+        <h2 class="font-bold text-lg mb-2">${camera.cameraName}</h2>
         <p class="text-sm text-gray-600 mb-2">
           <span class="font-semibold">UID:</span> ${camera.cameraID}
         </p>
@@ -214,7 +214,7 @@ const updateMarkers = () => {
         }
         
         <p class="text-sm text-gray-600 mb-3">
-          <span class="font-semibold">พิกัด:</span><br/>
+          <span class="font-semibold">พิกัด:</span>
           ${camera.latitude.toFixed(6)}, ${camera.longitude.toFixed(6)}
         </p>
         
@@ -664,5 +664,24 @@ onBeforeUnmount(() => {
 .custom-marker {
   background: transparent;
   border: none;
+}
+
+.marker-cluster-small,
+.marker-cluster-medium,
+.marker-cluster-large {
+  background-color: rgba(16, 185, 129, 0.6) !important;
+}
+
+.marker-cluster-small div,
+.marker-cluster-medium div,
+.marker-cluster-large div {
+  background-color: rgba(16, 185, 129, 0.8) !important;
+  color: white !important;  /* 👈 ตัวเลขเป็นสีขาว */
+  font-weight: bold !important;  /* 👈 ตัวหนา */
+  font-size: 14px !important;  /* 👈 ขนาดพอเหมาะ */
+}
+
+.marker-cluster div span {
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5) !important;
 }
 </style>
