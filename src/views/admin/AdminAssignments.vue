@@ -11,7 +11,10 @@ import {
   query,
   orderBy,
 } from "firebase/firestore";
+import { useDialog } from "../../composables/useDialog.js"; // 👈 Import
 
+// 👇 ใช้ composable
+const { showConfirm, showAlert, showToast } = useDialog();
 // --- State ---
 const assignments = ref([]);
 const cameras = ref([]); // 👈 (ใหม่) รายการกล้องทั้งหมด
@@ -143,7 +146,7 @@ const fetchAssignments = async () => {
     });
   } catch (e) {
     console.error("Error fetching assignments: ", e);
-    alert("เกิดข้อผิดพลาดในการดึงข้อมูล");
+    showAlert("เกิดข้อผิดพลาดในการดึงข้อมูล", { type: 'error' });
   }
 };
 
@@ -181,7 +184,6 @@ const handleAddAssignment = async () => {
     return;
   }
 
-  // เช็คว่ากล้องนี้ถูกมอบหมายแล้วหรือยัง
   const exists = assignments.value.some(
     (a) => a.cameraID === newAssignment.cameraID
   );
@@ -201,7 +203,7 @@ const handleAddAssignment = async () => {
     showToast("เพิ่ม Assignment สำเร็จ ✅", "success");
   } catch (e) {
     console.error("Error adding document: ", e);
-    alert("เกิดข้อผิดพลาดในการเพิ่มข้อมูล");
+    showAlert("เกิดข้อผิดพลาดในการเพิ่มข้อมูล", { type: 'error' });
   }
 };
 
@@ -209,16 +211,23 @@ const handleDeleteAssignment = async (id, cameraID) => {
   const camera = getCameraInfo(cameraID);
   const cameraName = camera ? camera.cameraName : cameraID;
 
-  if (!confirm(`คุณแน่ใจหรือไม่ว่าต้องการลบการมอบหมาย "${cameraName}"?`)) {
-    return;
-  }
+  const confirmed = await showConfirm({
+    title: 'ยืนยันการลบ',
+    message: `คุณแน่ใจหรือไม่ว่าต้องการลบการมอบหมาย<br/><strong>"${cameraName}"</strong>?`,
+    confirmText: 'ลบ',
+    cancelText: 'ยกเลิก',
+    type: 'error'
+  });
+
+  if (!confirmed) return;
+
   try {
     await deleteDoc(doc(db, "assignments", id));
     await fetchAssignments();
     showToast("ลบสำเร็จ ✅", "success");
   } catch (e) {
     console.error("Error deleting document: ", e);
-    alert("เกิดข้อผิดพลาดในการลบข้อมูล");
+    showAlert("เกิดข้อผิดพลาดในการลบข้อมูล", { type: 'error' });
   }
 };
 
@@ -248,7 +257,7 @@ const handleUpdateAssignment = async () => {
     showToast("อัปเดตสำเร็จ ✅", "success");
   } catch (e) {
     console.error("Error updating document: ", e);
-    alert("เกิดข้อผิดพลาดในการอัปเดตข้อมูล");
+    showAlert("เกิดข้อผิดพลาดในการอัปเดตข้อมูล", { type: 'error' });
   }
 };
 
@@ -273,15 +282,19 @@ const toggleSelect = (id) => {
 
 const handleBulkDelete = async () => {
   if (selectedIds.value.size === 0) {
-    alert("กรุณาเลือกรายการที่ต้องการลบ");
+    showAlert("กรุณาเลือกรายการที่ต้องการลบ", { type: 'warning' });
     return;
   }
 
-  if (
-    !confirm(`คุณแน่ใจหรือไม่ว่าต้องการลบ ${selectedIds.value.size} รายการ?`)
-  ) {
-    return;
-  }
+  const confirmed = await showConfirm({
+    title: 'ยืนยันการลบหลายรายการ',
+    message: `คุณแน่ใจหรือไม่ว่าต้องการลบ <strong>${selectedIds.value.size}</strong> รายการ?`,
+    confirmText: 'ลบทั้งหมด',
+    cancelText: 'ยกเลิก',
+    type: 'error'
+  });
+
+  if (!confirmed) return;
 
   try {
     const deletePromises = Array.from(selectedIds.value).map((id) =>
@@ -293,24 +306,11 @@ const handleBulkDelete = async () => {
     showToast(`ลบ ${deletePromises.length} รายการสำเร็จ ✅`, "success");
   } catch (e) {
     console.error("Error bulk deleting: ", e);
-    alert("เกิดข้อผิดพลาดในการลบข้อมูล");
+    showAlert("เกิดข้อผิดพลาดในการลบข้อมูล", { type: 'error' });
   }
 };
 
-const showToast = (message, type = "success") => {
-  const alertClass = type === "success" ? "alert-success" : "alert-error";
-  const toast = document.createElement("div");
-  toast.className = "toast toast-top toast-end z-50";
-  toast.innerHTML = `
-    <div class="alert ${alertClass}">
-      <span>${message}</span>
-    </div>
-  `;
-  document.body.appendChild(toast);
-  setTimeout(() => {
-    toast.remove();
-  }, 3000);
-};
+
 
 const getOfficerName = (email) => {
   const officer = officersList.value.find((o) => o.email === email);

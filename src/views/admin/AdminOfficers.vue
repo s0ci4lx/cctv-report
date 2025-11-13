@@ -12,7 +12,10 @@ import {
   orderBy,
   where,
 } from "firebase/firestore";
+import { useDialog } from "../../composables/useDialog.js"; // 👈 เพิ่ม Import
 
+// 👇 ใช้ composable
+const { showConfirm, showAlert, showToast } = useDialog();
 // --- State (ตัวแปร) ---
 const officers = ref([]);
 const assignments = ref([]); // เก็บข้อมูล assignments เพื่อนับสถิติ
@@ -106,6 +109,7 @@ const fetchAssignments = async () => {
 };
 
 // (R) READ: ดึงข้อมูลเจ้าหน้าที่
+// ✅ แก้ไข fetchOfficers
 const fetchOfficers = async () => {
   loading.value = true;
   officers.value = [];
@@ -116,11 +120,10 @@ const fetchOfficers = async () => {
       officers.value.push({ id: doc.id, ...doc.data(), assignmentCount: 0 });
     });
 
-    // ดึง assignments เพื่อนับสถิติ
     await fetchAssignments();
   } catch (e) {
     console.error("Error fetching officers: ", e);
-    alert("เกิดข้อผิดพลาดในการดึงข้อมูล");
+    showAlert("เกิดข้อผิดพลาดในการดึงข้อมูลเจ้าหน้าที่", { type: 'error' }); // 👈 เปลี่ยนจาก alert()
   } finally {
     loading.value = false;
   }
@@ -157,12 +160,12 @@ const openAddModal = () => {
 };
 
 // (C) CREATE: เพิ่มเจ้าหน้าที่
+// ✅ แก้ไข handleAddOfficer
 const handleAddOfficer = async () => {
   if (!validateForm(newOfficer)) {
     return;
   }
 
-  // เช็คว่า email ซ้ำไหม
   const emailExists = officers.value.some(
     (officer) => officer.email.toLowerCase() === newOfficer.email.toLowerCase()
   );
@@ -182,24 +185,35 @@ const handleAddOfficer = async () => {
     showToast("เพิ่มเจ้าหน้าที่สำเร็จ ✅", "success");
   } catch (e) {
     console.error("Error adding document: ", e);
-    alert("เกิดข้อผิดพลาดในการเพิ่มข้อมูล");
+    showAlert("เกิดข้อผิดพลาดในการเพิ่มข้อมูล", { type: 'error' }); // 👈 เปลี่ยนจาก alert()
   }
 };
 
 // (D) DELETE: ลบ
+// ✅ แก้ไข handleDeleteOfficer
 const handleDeleteOfficer = async (id, name, email) => {
-  // เช็คว่ามี assignments หรือไม่
   const hasAssignments = assignments.value.some(a => a.officerEmail === email);
   
   if (hasAssignments) {
-    const confirmMessage = `เจ้าหน้าที่ "${name}" มีงานที่มอบหมายอยู่ หากลบจะทำให้งานเหล่านั้นไม่มีผู้รับผิดชอบ\n\nคุณแน่ใจหรือไม่ที่จะลบ?`;
-    if (!confirm(confirmMessage)) {
-      return;
-    }
+    const confirmed = await showConfirm({
+      title: 'ยืนยันการลบเจ้าหน้าที่',
+      message: `เจ้าหน้าที่ <strong>"${name}"</strong> มีงานที่มอบหมายอยู่<br/><br/>หากลบจะทำให้งานเหล่านั้นไม่มีผู้รับผิดชอบ<br/><br/>คุณแน่ใจหรือไม่ที่จะลบ?`,
+      confirmText: 'ลบ',
+      cancelText: 'ยกเลิก',
+      type: 'error'
+    }); // 👈 เปลี่ยนจาก confirm()
+    
+    if (!confirmed) return;
   } else {
-    if (!confirm(`คุณแน่ใจหรือไม่ว่าต้องการลบเจ้าหน้าที่ "${name}"?`)) {
-      return;
-    }
+    const confirmed = await showConfirm({
+      title: 'ยืนยันการลบเจ้าหน้าที่',
+      message: `คุณแน่ใจหรือไม่ว่าต้องการลบเจ้าหน้าที่<br/><strong>"${name}"</strong>?`,
+      confirmText: 'ลบ',
+      cancelText: 'ยกเลิก',
+      type: 'error'
+    }); // 👈 เปลี่ยนจาก confirm()
+    
+    if (!confirmed) return;
   }
 
   try {
@@ -208,7 +222,7 @@ const handleDeleteOfficer = async (id, name, email) => {
     showToast("ลบเจ้าหน้าที่สำเร็จ ✅", "success");
   } catch (e) {
     console.error("Error deleting document: ", e);
-    alert("เกิดข้อผิดพลาดในการลบข้อมูล");
+    showAlert("เกิดข้อผิดพลาดในการลบข้อมูล", { type: 'error' }); // 👈 เปลี่ยนจาก alert()
   }
 };
 
@@ -221,6 +235,7 @@ const openEditModal = (officer) => {
 };
 
 // (U) UPDATE Step 2: บันทึก
+// ✅ แก้ไข handleUpdateOfficer
 const handleUpdateOfficer = async () => {
   if (!editingOfficer.value) return;
 
@@ -228,7 +243,6 @@ const handleUpdateOfficer = async () => {
     return;
   }
 
-  // เช็คว่า email ซ้ำกับคนอื่นไหม (ไม่รวมตัวเอง)
   const emailExists = officers.value.some(
     (officer) =>
       officer.id !== editingOfficer.value.id &&
@@ -255,24 +269,8 @@ const handleUpdateOfficer = async () => {
     showToast("อัปเดตข้อมูลสำเร็จ ✅", "success");
   } catch (e) {
     console.error("Error updating document: ", e);
-    alert("เกิดข้อผิดพลาดในการอัปเดตข้อมูล");
+    showAlert("เกิดข้อผิดพลาดในการอัปเดตข้อมูล", { type: 'error' }); // 👈 เปลี่ยนจาก alert()
   }
-};
-
-// Toast Notification
-const showToast = (message, type = "success") => {
-  const alertClass = type === "success" ? "alert-success" : "alert-error";
-  const toast = document.createElement("div");
-  toast.className = "toast toast-top toast-end z-50";
-  toast.innerHTML = `
-    <div class="alert ${alertClass}">
-      <span>${message}</span>
-    </div>
-  `;
-  document.body.appendChild(toast);
-  setTimeout(() => {
-    toast.remove();
-  }, 3000);
 };
 
 // สร้าง Initial สำหรับ Avatar

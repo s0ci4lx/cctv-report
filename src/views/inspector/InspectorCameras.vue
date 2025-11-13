@@ -353,7 +353,7 @@ onUnmounted(() => {
                 <td>
                   <button
                     @click="copyToClipboard(camera.cameraID, `คัดลอก ${camera.cameraID} แล้ว ✅`)"
-                    class="badge badge-info hover:badge-primary transition-colors cursor-pointer"
+                    class="btn btn-soft btn-primary btn-sm hover:badge-primary transition-colors cursor-pointer"
                     title="คลิกเพื่อคัดลอก"
                   >
                     {{ camera.cameraID }}

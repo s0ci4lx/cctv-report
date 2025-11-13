@@ -11,7 +11,10 @@ import {
   query,
   orderBy,
 } from "firebase/firestore";
+import { useDialog } from "../../composables/useDialog.js"; // 👈 เพิ่ม Import
 
+// 👇 ใช้ composable
+const { showConfirm, showAlert, showToast } = useDialog();
 // --- State ---
 const cameras = ref([]);
 const assignments = ref([]);
@@ -93,6 +96,7 @@ const filteredCameras = computed(() => {
 // --- Functions ---
 
 // ดึงข้อมูลกล้อง
+// ✅ แก้ไข fetchCameras
 const fetchCameras = async () => {
   cameras.value = [];
   try {
@@ -103,7 +107,7 @@ const fetchCameras = async () => {
     });
   } catch (e) {
     console.error("Error fetching cameras: ", e);
-    alert("เกิดข้อผิดพลาดในการดึงข้อมูล");
+    showAlert("เกิดข้อผิดพลาดในการดึงข้อมูลกล้อง", { type: 'error' }); // 👈 เปลี่ยนจาก alert()
   }
 };
 
@@ -205,12 +209,12 @@ const openAddModal = () => {
 };
 
 // เพิ่มกล้อง
+// ✅ แก้ไข handleAddCamera
 const handleAddCamera = async () => {
   if (!validateForm(newCamera)) {
     return;
   }
 
-  // เช็คว่า cameraID ซ้ำหรือไม่
   const exists = cameras.value.some(c => c.cameraID === newCamera.cameraID.trim());
   if (exists) {
     formErrors.cameraID = 'Camera UID นี้มีในระบบแล้ว';
@@ -231,21 +235,34 @@ const handleAddCamera = async () => {
     showToast('เพิ่มกล้องสำเร็จ ✅', 'success');
   } catch (e) {
     console.error("Error adding camera: ", e);
-    alert("เกิดข้อผิดพลาดในการเพิ่มข้อมูล");
+    showAlert("เกิดข้อผิดพลาดในการเพิ่มข้อมูล", { type: 'error' }); // 👈 เปลี่ยนจาก alert()
   }
 };
 
 // ลบกล้อง
+// ✅ แก้ไข handleDeleteCamera
 const handleDeleteCamera = async (id, cameraID, cameraName) => {
   // เช็คว่ามี assignment หรือไม่
   if (isAssigned(cameraID)) {
-    alert(`ไม่สามารถลบได้: กล้อง "${cameraName}" (${cameraID}) ถูกมอบหมายให้เจ้าหน้าที่แล้ว\nกรุณาลบ Assignment ก่อน`);
+    await showAlert(
+      `ไม่สามารถลบได้: กล้อง <strong>"${cameraName}"</strong> (${cameraID}) ถูกมอบหมายให้เจ้าหน้าที่แล้ว<br/><br/>กรุณาลบ Assignment ก่อน`,
+      { 
+        type: 'warning',
+        title: 'ไม่สามารถลบได้'
+      }
+    ); // 👈 เปลี่ยนจาก alert()
     return;
   }
 
-  if (!confirm(`คุณแน่ใจหรือไม่ว่าต้องการลบกล้อง "${cameraName}" (${cameraID})?`)) {
-    return;
-  }
+  const confirmed = await showConfirm({
+    title: 'ยืนยันการลบกล้อง',
+    message: `คุณแน่ใจหรือไม่ว่าต้องการลบกล้อง<br/><strong>"${cameraName}"</strong><br/>(${cameraID})?`,
+    confirmText: 'ลบ',
+    cancelText: 'ยกเลิก',
+    type: 'error'
+  }); // 👈 เปลี่ยนจาก confirm()
+
+  if (!confirmed) return;
 
   try {
     await deleteDoc(doc(db, "cameras", id));
@@ -253,7 +270,7 @@ const handleDeleteCamera = async (id, cameraID, cameraName) => {
     showToast('ลบกล้องสำเร็จ ✅', 'success');
   } catch (e) {
     console.error("Error deleting camera: ", e);
-    alert("เกิดข้อผิดพลาดในการลบข้อมูล");
+    showAlert("เกิดข้อผิดพลาดในการลบข้อมูล", { type: 'error' }); // 👈 เปลี่ยนจาก alert()
   }
 };
 
@@ -265,6 +282,7 @@ const openEditModal = (camera) => {
 };
 
 // บันทึกการแก้ไข
+// ✅ แก้ไข handleUpdateCamera
 const handleUpdateCamera = async () => {
   if (!editingCamera.value) return;
 
@@ -272,7 +290,6 @@ const handleUpdateCamera = async () => {
     return;
   }
 
-  // เช็คว่า cameraID ซ้ำกับคนอื่นหรือไม่
   const exists = cameras.value.some(c => 
     c.id !== editingCamera.value.id && 
     c.cameraID === editingCamera.value.cameraID.trim()
@@ -295,11 +312,11 @@ const handleUpdateCamera = async () => {
     document.getElementById('edit_camera_modal').close();
     editingCamera.value = null;
     await fetchCameras();
-    await fetchAssignments(); // รีเฟรช assignments ด้วย
+    await fetchAssignments();
     showToast('อัปเดตกล้องสำเร็จ ✅', 'success');
   } catch (e) {
     console.error("Error updating camera: ", e);
-    alert("เกิดข้อผิดพลาดในการอัปเดตข้อมูล");
+    showAlert("เกิดข้อผิดพลาดในการอัปเดตข้อมูล", { type: 'error' }); // 👈 เปลี่ยนจาก alert()
   }
 };
 
@@ -307,22 +324,6 @@ const handleUpdateCamera = async () => {
 const openImagePreview = (url) => {
   previewImage.value = url;
   document.getElementById('image_preview_modal').showModal();
-};
-
-// Toast
-const showToast = (message, type = 'success') => {
-  const alertClass = type === 'success' ? 'alert-success' : 'alert-error';
-  const toast = document.createElement('div');
-  toast.className = 'toast toast-top toast-end z-50';
-  toast.innerHTML = `
-    <div class="alert ${alertClass}">
-      <span>${message}</span>
-    </div>
-  `;
-  document.body.appendChild(toast);
-  setTimeout(() => {
-    toast.remove();
-  }, 3000);
 };
 
 // เปิดแผนที่
