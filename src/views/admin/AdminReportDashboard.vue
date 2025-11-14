@@ -10,13 +10,25 @@ const officers = ref([]);
 const assignments = ref([]);
 const loading = ref(true);
 
+// 👇 เพิ่มตัวเลือกประเภทกล้อง (สีตรงกับหมุดแผนที่)
+const cameraTypes = [
+  { value: '4G', label: '4G', icon: '📡', bgColor: 'bg-red-500', textColor: 'text-white' },
+  { value: 'WIFI', label: 'WIFI', icon: '📶', bgColor: 'bg-cyan-500', textColor: 'text-white' },
+  { value: 'Tactical', label: 'Tactical', icon: '🎯', bgColor: 'bg-yellow-500', textColor: 'text-white' }
+];
+
+// ฟังก์ชันหาข้อมูล Camera Type
+const getCameraTypeInfo = (type) => {
+  return cameraTypes.find(t => t.value === type) || cameraTypes[0];
+};
+
 // Filters
 const searchQuery = ref('');
-const filterStatus = ref('all'); // all, Normal, Issue
+const filterStatus = ref('all');
 const filterOfficer = ref('all');
 const filterCamera = ref('all');
 
-// Date Range Filter (ใหม่!)
+// Date Range Filter
 const startDate = ref('');
 const endDate = ref('');
 
@@ -63,7 +75,6 @@ const topIssueCameras = computed(() => {
 const filteredReports = computed(() => {
   let result = reports.value;
 
-  // กรองตามวันที่
   if (startDate.value) {
     const start = new Date(startDate.value);
     start.setHours(0, 0, 0, 0);
@@ -76,22 +87,18 @@ const filteredReports = computed(() => {
     result = result.filter(r => r.timestamp.toDate() <= end);
   }
 
-  // กรองตามสถานะ
   if (filterStatus.value !== 'all') {
     result = result.filter(r => r.status === filterStatus.value);
   }
 
-  // กรองตามเจ้าหน้าที่
   if (filterOfficer.value !== 'all') {
     result = result.filter(r => r.officerEmail === filterOfficer.value);
   }
 
-  // กรองตามกล้อง
   if (filterCamera.value !== 'all') {
     result = result.filter(r => r.cameraId === filterCamera.value);
   }
 
-  // ค้นหา
   if (searchQuery.value) {
     const query = searchQuery.value.toLowerCase();
     result = result.filter(r => {
@@ -142,13 +149,11 @@ const uniqueCameras = computed(() => {
 // --- Functions ---
 
 const getCameraInfo = (cameraId) => {
-  // ถ้าเป็น assignment ID (จาก reports_log เก่า)
   const assignment = assignments.value.find(a => a.id === cameraId);
   if (assignment) {
     const camera = cameras.value.find(c => c.cameraID === assignment.cameraID);
     return camera;
   }
-  // ถ้าเป็น cameraID ตรงๆ
   return cameras.value.find(c => c.cameraID === cameraId);
 };
 
@@ -179,11 +184,9 @@ const formatDate = (timestamp) => {
   });
 };
 
-// ดึงข้อมูลทั้งหมด
 const fetchData = async () => {
   loading.value = true;
   try {
-    // ดึงข้อมูลพร้อมกัน
     const [camerasSnap, officersSnap, assignmentsSnap, reportsSnap] = await Promise.all([
       getDocs(query(collection(db, "cameras"))),
       getDocs(query(collection(db, "officers"))),
@@ -219,28 +222,23 @@ const fetchData = async () => {
   }
 };
 
-// [ใหม่] ฟังก์ชันสำหรับรับวันที่ในรูปแบบ YYYY-MM-DD ตามเวลาท้องถิ่น (แก้ไขปัญหา Timezone Shift)
 const getLocalISODate = (date) => {
-  // สร้างวันที่ที่เลื่อนไปตาม Timezone Offset เพื่อให้ toISOString() ไม่ปัดวันกลับ
-  const offset = date.getTimezoneOffset() * 60000; // แปลงนาทีเป็นมิลลิวินาที
+  const offset = date.getTimezoneOffset() * 60000;
   const localTime = new Date(date.getTime() - offset);
-  return localTime.toISOString().split('T')[0]; // จะได้ "2025-11-06" แทนที่จะเป็น "2025-11-05"
+  return localTime.toISOString().split('T')[0];
 };
 
-// ตั้งค่าวันที่เริ่มต้น (7 วันย้อนหลัง) - ปรับปรุงแล้ว
 const setDefaultDateRange = () => {
   const today = new Date();
   const sevenDaysAgo = new Date(today);
   sevenDaysAgo.setDate(today.getDate() - 7);
   
-  endDate.value = getLocalISODate(today); // <--- ใช้ getLocalISODate
-  startDate.value = getLocalISODate(sevenDaysAgo); // <--- ใช้ getLocalISODate
+  endDate.value = getLocalISODate(today);
+  startDate.value = getLocalISODate(sevenDaysAgo);
 };
 
-// Quick Date Filters
 const setToday = () => {
   const today = new Date();
-  // แก้ไข: ใช้ getLocalISODate เพื่อป้องกัน Timezone Shift
   startDate.value = getLocalISODate(today);
   endDate.value = getLocalISODate(today);
   currentPage.value = 1;
@@ -249,7 +247,6 @@ const setToday = () => {
 const setYesterday = () => {
   const yesterday = new Date();
   yesterday.setDate(yesterday.getDate() - 1);
-  // แก้ไข: ใช้ getLocalISODate เพื่อป้องกัน Timezone Shift
   startDate.value = getLocalISODate(yesterday);
   endDate.value = getLocalISODate(yesterday);
   currentPage.value = 1;
@@ -259,7 +256,6 @@ const setThisWeek = () => {
   const today = new Date();
   const weekAgo = new Date(today);
   weekAgo.setDate(today.getDate() - 7);
-  // แก้ไข: ใช้ getLocalISODate เพื่อป้องกัน Timezone Shift
   startDate.value = getLocalISODate(weekAgo);
   endDate.value = getLocalISODate(today);
   currentPage.value = 1;
@@ -268,7 +264,6 @@ const setThisWeek = () => {
 const setThisMonth = () => {
   const today = new Date();
   const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
-  // แก้ไข: ใช้ getLocalISODate เพื่อป้องกัน Timezone Shift
   startDate.value = getLocalISODate(firstDay);
   endDate.value = getLocalISODate(today);
   currentPage.value = 1;
@@ -280,7 +275,6 @@ const clearDateFilter = () => {
   currentPage.value = 1;
 };
 
-// Reset Filters
 const resetFilters = () => {
   searchQuery.value = '';
   filterStatus.value = 'all';
@@ -290,23 +284,21 @@ const resetFilters = () => {
   currentPage.value = 1;
 };
 
-// Export to Excel
 const exportToExcel = () => {
   if (filteredReports.value.length === 0) {
     alert('ไม่มีข้อมูลให้ Export');
     return;
   }
 
-  // สร้าง CSV (ลบ email ออก)
-  const headers = ['วันที่', 'เวลา', 'ชื่อกล้อง', 'Camera UID', 'สถานะ', 'หมายเหตุ', 'เจ้าหน้าที่'];
+  const headers = ['วันที่', 'เวลา', 'ชื่อกล้อง', 'Camera UID', 'ประเภทกล้อง', 'สถานะ', 'หมายเหตุ', 'เจ้าหน้าที่'];
   
   const rows = filteredReports.value.map(report => {
     const camera = getCameraInfo(report.cameraId);
     const cameraName = camera ? camera.cameraName : report.cameraId;
     const cameraUID = camera ? camera.cameraID : report.cameraId;
+    const cameraType = camera ? (camera.cameraType || '4G') : '4G';
     const date = report.timestamp.toDate();
     
-    // ลบ newline และ quote ออกจาก notes
     const cleanNotes = (report.notes || '-').replace(/[\r\n]+/g, ' ').trim();
     
     return [
@@ -314,23 +306,21 @@ const exportToExcel = () => {
       date.toLocaleTimeString('th-TH'),
       cameraName,
       cameraUID,
+      cameraType,
       report.status === 'Normal' ? 'ปกติ' : 'มีปัญหา',
       cleanNotes,
       getOfficerName(report.officerEmail)
     ];
   });
 
-  // สร้าง CSV string
   const csvContent = [
     headers.join(','),
     ...rows.map(row => row.map(cell => `"${cell}"`).join(','))
   ].join('\n');
 
-  // เพิ่ม BOM สำหรับ UTF-8
   const BOM = '\uFEFF';
   const blob = new Blob([BOM + csvContent], { type: 'text/csv;charset=utf-8;' });
   
-  // Download
   const link = document.createElement('a');
   const url = URL.createObjectURL(blob);
   const filename = `CCTV_Report_${new Date().toISOString().split('T')[0]}.csv`;
@@ -345,7 +335,6 @@ const exportToExcel = () => {
   showToast(`ดาวน์โหลด ${filename} สำเร็จ`, 'success');
 };
 
-// Toast
 const showToast = (message, type = 'success') => {
   const alertClass = type === 'success' ? 'alert-success' : 'alert-info';
   const toast = document.createElement('div');
@@ -361,11 +350,9 @@ const showToast = (message, type = 'success') => {
   }, 3000);
 };
 
-// Pagination
 const goToPage = (page) => {
   if (page >= 1 && page <= totalPages.value) {
     currentPage.value = page;
-    // Scroll ไปที่ตาราง แทนที่จะเป็นบนสุด
     const tableElement = document.querySelector('.table');
     if (tableElement) {
       tableElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -373,7 +360,6 @@ const goToPage = (page) => {
   }
 };
 
-// --- Lifecycle ---
 onMounted(async () => {
   setDefaultDateRange();
   await fetchData();
@@ -478,7 +464,7 @@ onMounted(async () => {
 
       <!-- Charts Section -->
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-        <!-- Pie Chart (Status) -->
+        <!-- Pie Chart -->
         <div class="card bg-base-100 shadow-lg">
           <div class="card-body">
             <h3 class="card-title text-lg mb-4">สัดส่วนสถานะ</h3>
@@ -541,11 +527,10 @@ onMounted(async () => {
         </div>
       </div>
 
-      <!-- Date Range Filter (ใหม่!) -->
+      <!-- Date Range Filter -->
       <div class="card bg-base-100 shadow-md mb-6">
         <div class="card-body p-4">
           <div class="flex flex-col gap-4">
-            <!-- Quick Date Buttons -->
             <div>
               <label class="label">
                 <span class="label-text font-semibold">เลือกช่วงเวลา</span>
@@ -559,7 +544,6 @@ onMounted(async () => {
               </div>
             </div>
 
-            <!-- Date Range Inputs -->
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div class="form-control">
                 <label class="label">
@@ -586,7 +570,6 @@ onMounted(async () => {
               </div>
             </div>
 
-            <!-- Search Input -->
             <div class="form-control">
               <label class="label">
                 <span class="label-text">ค้นหา</span>
@@ -611,7 +594,6 @@ onMounted(async () => {
               <label class="label p-0">
                 <span class="label-text font-semibold">ตัวกรอง</span>
               </label>
-              <!-- Reset Button (แสดงเฉพาะมือถือ) -->
               <button @click="resetFilters" class="btn btn-ghost btn-sm gap-2 lg:hidden">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
@@ -620,7 +602,6 @@ onMounted(async () => {
               </button>
             </div>
 
-            <!-- Status Filter -->
             <div class="form-control">
               <label class="label">
                 <span class="label-text">สถานะ</span>
@@ -632,7 +613,6 @@ onMounted(async () => {
               </select>
             </div>
 
-            <!-- Officer Filter -->
             <div class="form-control">
               <label class="label">
                 <span class="label-text">เจ้าหน้าที่</span>
@@ -649,7 +629,6 @@ onMounted(async () => {
               </select>
             </div>
 
-            <!-- Camera Filter -->
             <div class="form-control">
               <label class="label">
                 <span class="label-text">กล้อง</span>
@@ -666,7 +645,6 @@ onMounted(async () => {
               </select>
             </div>
 
-            <!-- Reset Button (แสดงเฉพาะ Desktop) -->
             <button @click="resetFilters" class="btn btn-ghost gap-2 hidden lg:flex">
               <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
@@ -719,12 +697,12 @@ onMounted(async () => {
                   </td>
                   <td>
                     <div class="flex items-center gap-2">
-                      <div class="avatar placeholder">
-                        <div class="bg-primary text-primary-content rounded-full w-8">
-                          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                          </svg>
-                        </div>
+                      <!-- 👇 แทนที่ SVG ด้วย Badge ประเภทกล้อง -->
+                      <div 
+                        class="rounded-full w-10 h-10 flex items-center justify-center text-lg"
+                        :class="getCameraTypeInfo(getCameraInfo(item.cameraId)?.cameraType || '4G').bgColor"
+                      >
+                        {{ getCameraTypeInfo(getCameraInfo(item.cameraId)?.cameraType || '4G').icon }}
                       </div>
                       <div>
                         <div class="font-medium">{{ getCameraInfo(item.cameraId)?.cameraName || item.cameraId }}</div>
@@ -770,7 +748,6 @@ onMounted(async () => {
           class="card bg-base-100 shadow-md hover:shadow-lg transition-shadow"
         >
           <div class="card-body p-4">
-            <!-- Header: วัน-เวลา และ สถานะ -->
             <div class="flex justify-between items-start mb-3">
               <div class="text-sm text-base-content/70">
                 {{ formatTimestamp(item.timestamp) }}
@@ -789,14 +766,13 @@ onMounted(async () => {
               </span>
             </div>
 
-            <!-- กล้อง -->
             <div class="flex items-start gap-3 mb-3">
-              <div class="avatar placeholder">
-                <div class="bg-primary text-primary-content rounded-full w-10">
-                  <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                  </svg>
-                </div>
+              <!-- 👇 แทนที่ SVG ด้วย Badge ประเภทกล้อง -->
+              <div 
+                class="rounded-full w-12 h-12 flex items-center justify-center text-2xl flex-shrink-0"
+                :class="getCameraTypeInfo(getCameraInfo(item.cameraId)?.cameraType || '4G').bgColor"
+              >
+                {{ getCameraTypeInfo(getCameraInfo(item.cameraId)?.cameraType || '4G').icon }}
               </div>
               <div class="flex-1 min-w-0">
                 <div class="font-semibold text-base truncate">
@@ -808,7 +784,6 @@ onMounted(async () => {
               </div>
             </div>
 
-            <!-- หมายเหตุ (ถ้ามี) -->
             <div v-if="item.notes" class="mb-3">
               <div class="text-xs font-semibold text-base-content/70 mb-1">หมายเหตุ:</div>
               <div class="text-sm bg-base-200 rounded-lg p-2">
@@ -816,10 +791,8 @@ onMounted(async () => {
               </div>
             </div>
 
-            <!-- Divider -->
             <div class="divider my-2"></div>
 
-            <!-- ผู้รายงาน -->
             <div class="flex items-center gap-2">
               <div class="avatar placeholder">
                 <div class="bg-neutral text-neutral-content rounded-full w-8">

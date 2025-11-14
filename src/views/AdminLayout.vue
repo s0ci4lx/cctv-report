@@ -8,7 +8,7 @@ const isActive = (path) => {
 </script>
 
 <template>
-  <div class="container mx-auto p-4 md:p-8">
+  <div class="container mx-auto p-2 sm:p-4 md:p-6 lg:p-8">
     <h1
       class="text-4xl font-extrabold text-base-content mb-8 text-center md:text-left"
     >
@@ -26,6 +26,7 @@ const isActive = (path) => {
         }"
       >
         📊 ดูรายงาน (Logs)
+
       </RouterLink>
       <RouterLink
         to="/admin/map"

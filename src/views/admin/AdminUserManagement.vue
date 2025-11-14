@@ -301,7 +301,7 @@ onMounted(async () => {
 
     <div v-else>
       <!-- Statistics Cards -->
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
         <div class="stats shadow bg-base-100">
           <div class="stat">
             <div class="stat-figure text-info">
@@ -376,11 +376,11 @@ onMounted(async () => {
       </div>
 
       <!-- Forms Section -->
-      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-4">
         <!-- Add Inspector Form -->
         <div class="card bg-base-100 shadow-lg">
           <div class="card-body">
-            <h3 class="card-title text-secondary gap-2 mb-6">
+            <h3 class="card-title text-secondary gap-2 mb-2">
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 class="h-6 w-6"
@@ -398,7 +398,7 @@ onMounted(async () => {
               เพิ่ม Inspector
             </h3>
 
-            <div class="space-y-4">
+            <div class="space-y-2">
               <div class="form-control w-full">
                 <label class="label">
                   <span class="label-text font-semibold">Email</span>
@@ -426,7 +426,7 @@ onMounted(async () => {
               </div>
             </div>
 
-            <div class="card-actions justify-end mt-6">
+            <div class="card-actions justify-end mt-4">
               <button
                 @click="addInspector"
                 class="btn btn-secondary gap-2 w-full sm:w-auto"
@@ -479,7 +479,7 @@ onMounted(async () => {
         <!-- Add Admin Form -->
         <div class="card bg-base-100 shadow-lg">
           <div class="card-body">
-            <h3 class="card-title text-info gap-2 mb-6">
+            <h3 class="card-title text-info gap-2 mb-2">
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 class="h-6 w-6"
@@ -497,7 +497,7 @@ onMounted(async () => {
               เพิ่ม Admin
             </h3>
 
-            <div class="space-y-4">
+            <div class="space-y-2">
               <div class="form-control w-full">
                 <label class="label">
                   <span class="label-text font-semibold">Email</span>
@@ -525,7 +525,7 @@ onMounted(async () => {
               </div>
             </div>
 
-            <div class="card-actions justify-end mt-6">
+            <div class="card-actions justify-end mt-4">
               <button
                 @click="addAdmin"
                 class="btn btn-info gap-2 w-full sm:w-auto"
@@ -575,7 +575,7 @@ onMounted(async () => {
       </div>
 
       <!-- Current Users Lists -->
-      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-4">
         <!-- Current Inspectors -->
         <div class="card bg-base-100 shadow-lg">
           <div class="card-body">

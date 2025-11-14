@@ -10,6 +10,18 @@ const officers = ref([]);
 const assignments = ref([]);
 const loading = ref(true);
 
+// 👇 เพิ่มตัวเลือกประเภทกล้อง (สีตรงกับหมุดแผนที่)
+const cameraTypes = [
+  { value: '4G', label: '4G', icon: '📡', bgColor: 'bg-red-500', textColor: 'text-white' },
+  { value: 'WIFI', label: 'WIFI', icon: '📶', bgColor: 'bg-cyan-500', textColor: 'text-white' },
+  { value: 'Tactical', label: 'Tactical', icon: '🎯', bgColor: 'bg-yellow-500', textColor: 'text-white' }
+];
+
+// ฟังก์ชันหาข้อมูล Camera Type
+const getCameraTypeInfo = (type) => {
+  return cameraTypes.find(t => t.value === type) || cameraTypes[0];
+};
+
 // Filters
 const searchQuery = ref('');
 const filterStatus = ref('all'); // all, Normal, Issue
@@ -286,12 +298,13 @@ const exportToExcel = () => {
   }
 
   // สร้าง CSV
-  const headers = ['วันที่', 'เวลา', 'ชื่อกล้อง', 'Camera UID', 'สถานะ', 'หมายเหตุ', 'เจ้าหน้าที่'];
+  const headers = ['วันที่', 'เวลา', 'ชื่อกล้อง', 'Camera UID', 'ประเภทกล้อง', 'สถานะ', 'หมายเหตุ', 'เจ้าหน้าที่'];
   
   const rows = filteredReports.value.map(report => {
     const camera = getCameraInfo(report.cameraId);
     const cameraName = camera ? camera.cameraName : report.cameraId;
     const cameraUID = camera ? camera.cameraID : report.cameraId;
+    const cameraType = camera ? (camera.cameraType || '4G') : '4G';
     const date = report.timestamp.toDate();
     
     const cleanNotes = (report.notes || '-').replace(/[\r\n]+/g, ' ').trim();
@@ -301,6 +314,7 @@ const exportToExcel = () => {
       date.toLocaleTimeString('th-TH'),
       cameraName,
       cameraUID,
+      cameraType,
       report.status === 'Normal' ? 'ปกติ' : 'มีปัญหา',
       cleanNotes,
       getOfficerName(report.officerEmail)
@@ -703,12 +717,12 @@ onMounted(async () => {
                   </td>
                   <td>
                     <div class="flex items-center gap-2">
-                      <div class="avatar placeholder">
-                        <div class="bg-primary text-primary-content rounded-full w-8">
-                          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                          </svg>
-                        </div>
+                      <!-- 👇 แทนที่ SVG ด้วย Badge ประเภทกล้อง -->
+                      <div 
+                        class="rounded-full w-10 h-10 flex items-center justify-center text-lg"
+                        :class="getCameraTypeInfo(getCameraInfo(item.cameraId)?.cameraType || '4G').bgColor"
+                      >
+                        {{ getCameraTypeInfo(getCameraInfo(item.cameraId)?.cameraType || '4G').icon }}
                       </div>
                       <div>
                         <div class="font-medium">{{ getCameraInfo(item.cameraId)?.cameraName || item.cameraId }}</div>
@@ -775,12 +789,12 @@ onMounted(async () => {
 
             <!-- กล้อง -->
             <div class="flex items-start gap-3 mb-3">
-              <div class="avatar placeholder">
-                <div class="bg-primary text-primary-content rounded-full w-10">
-                  <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                  </svg>
-                </div>
+              <!-- 👇 แทนที่ SVG ด้วย Badge ประเภทกล้อง -->
+              <div 
+                class="rounded-full w-12 h-12 flex items-center justify-center text-2xl flex-shrink-0"
+                :class="getCameraTypeInfo(getCameraInfo(item.cameraId)?.cameraType || '4G').bgColor"
+              >
+                {{ getCameraTypeInfo(getCameraInfo(item.cameraId)?.cameraType || '4G').icon }}
               </div>
               <div class="flex-1 min-w-0">
                 <div class="font-semibold text-base truncate">
