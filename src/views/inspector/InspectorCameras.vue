@@ -8,14 +8,26 @@ import {
   orderBy,
 } from "firebase/firestore";
 
+// 👇 เพิ่มตัวเลือกประเภทกล้อง
+const cameraTypes = [
+  { value: '4G', label: '4G', icon: '📡', color: 'badge-primary' },
+  { value: 'WIFI', label: 'WIFI', icon: '📶', color: 'badge-info' },
+  { value: 'Tactical', label: 'Tactical', icon: '🎯', color: 'badge-warning' }
+];
+
+// ฟังก์ชันหาข้อมูล Camera Type
+const getCameraTypeInfo = (type) => {
+  return cameraTypes.find(t => t.value === type) || cameraTypes[0];
+};
+
 // --- State ---
 const cameras = ref([]);
 const assignments = ref([]);
 const officersList = ref([]);
 const loading = ref(true);
 const searchQuery = ref('');
-const sortBy = ref('cameraID'); // cameraID, cameraName, status
-const viewMode = ref('cards'); // 'cards' หรือ 'table'
+const sortBy = ref('cameraID');
+const viewMode = ref('cards');
 const isLargeScreen = ref(true);
 
 // State สำหรับ Preview รูป
@@ -29,6 +41,17 @@ const assignedCameras = computed(() => {
 });
 const unassignedCameras = computed(() => totalCameras.value - assignedCameras.value);
 
+// 👇 นับจำนวนกล้องแต่ละประเภท
+const camera4GCount = computed(() => 
+  cameras.value.filter(c => (c.cameraType || '4G') === '4G').length
+);
+const cameraWIFICount = computed(() => 
+  cameras.value.filter(c => c.cameraType === 'WIFI').length
+);
+const cameraTacticalCount = computed(() => 
+  cameras.value.filter(c => c.cameraType === 'Tactical').length
+);
+
 // View mode ที่มีผล - บังคับเป็น cards สำหรับหน้าจอเล็ก
 const effectiveViewMode = computed(() => {
   return isLargeScreen.value ? viewMode.value : 'cards';
@@ -38,7 +61,6 @@ const effectiveViewMode = computed(() => {
 const filteredCameras = computed(() => {
   let result = cameras.value;
 
-  // ค้นหา
   if (searchQuery.value) {
     const query = searchQuery.value.toLowerCase();
     result = result.filter(c => 
@@ -47,7 +69,6 @@ const filteredCameras = computed(() => {
     );
   }
 
-  // เรียงลำดับ
   result = [...result].sort((a, b) => {
     if (sortBy.value === 'cameraID') {
       return a.cameraID.localeCompare(b.cameraID);
@@ -66,7 +87,6 @@ const filteredCameras = computed(() => {
 
 // --- Functions ---
 
-// ดึงข้อมูลกล้อง
 const fetchCameras = async () => {
   cameras.value = [];
   try {
@@ -81,7 +101,6 @@ const fetchCameras = async () => {
   }
 };
 
-// ดึงข้อมูล assignments เพื่อเช็คสถานะ
 const fetchAssignments = async () => {
   assignments.value = [];
   try {
@@ -108,33 +127,27 @@ const fetchOfficers = async () => {
   }
 };
 
-// เช็คว่ากล้องถูกมอบหมายหรือยัง
 const isAssigned = (cameraID) => {
   return assignments.value.some(a => a.cameraID === cameraID);
 };
 
-// หาเจ้าหน้าที่ที่ดูแลกล้อง
 const getAssignedOfficer = (cameraID) => {
   const assignment = assignments.value.find(a => a.cameraID === cameraID);
   if (!assignment) return null;
   
-  // หาชื่อจาก email
   const officer = officersList.value.find(o => o.email === assignment.officerEmail);
   return officer ? officer.name : assignment.officerEmail;
 };
 
-// Preview รูปภาพ
 const openImagePreview = (url) => {
   previewImage.value = url;
   document.getElementById('image_preview_modal').showModal();
 };
 
-// เปิดแผนที่
 const openMap = (lat, lng) => {
   window.open(`https://www.google.com/maps?q=${lat},${lng}`, '_blank');
 };
 
-// Copy to Clipboard
 const copyToClipboard = async (text, successMessage = "คัดลอกแล้ว ✅") => {
   try {
     await navigator.clipboard.writeText(text);
@@ -145,7 +158,6 @@ const copyToClipboard = async (text, successMessage = "คัดลอกแล�
   }
 };
 
-// Toast
 const showToast = (message, type = 'success') => {
   const alertClass = type === 'success' ? 'alert-success' : 'alert-error';
   const toast = document.createElement('div');
@@ -161,7 +173,6 @@ const showToast = (message, type = 'success') => {
   }, 3000);
 };
 
-// ตรวจจับการเปลี่ยนขนาดหน้าจอ
 const updateScreenSize = () => {
   if (typeof window !== 'undefined') {
     isLargeScreen.value = window.innerWidth >= 1024;
@@ -172,10 +183,8 @@ const updateScreenSize = () => {
 onMounted(async () => {
   loading.value = true;
   
-  // ตั้งค่าขนาดหน้าจอครั้งแรก
   updateScreenSize();
   
-  // เพิ่ม event listener สำหรับการ resize
   if (typeof window !== 'undefined') {
     window.addEventListener('resize', updateScreenSize);
   }
@@ -188,7 +197,6 @@ onMounted(async () => {
   loading.value = false;
 });
 
-// Cleanup event listener
 onUnmounted(() => {
   if (typeof window !== 'undefined') {
     window.removeEventListener('resize', updateScreenSize);
@@ -203,7 +211,7 @@ onUnmounted(() => {
       <div>
         <h2 class="text-3xl font-bold text-base-content mb-2">รายการกล้องทั้งหมด</h2>
         <p class="text-base-content/70">
-          กล้องวงจรปิดทั้งหมดในระบบ ({{ totalCameras }} ตัว) - Inspector View
+          กล้องวงจรปิดทั้งหมดในระบบ ({{ totalCameras }} ตัว)
         </p>
       </div>
 
@@ -217,8 +225,9 @@ onUnmounted(() => {
       </div>
     </div>
 
-    <!-- Statistics -->
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+    <!-- Statistics - 6 Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+      <!-- Card 1: Total -->
       <div class="stats shadow bg-base-100">
         <div class="stat">
           <div class="stat-figure text-primary">
@@ -232,6 +241,7 @@ onUnmounted(() => {
         </div>
       </div>
 
+      <!-- Card 2: Assigned -->
       <div class="stats shadow bg-base-100">
         <div class="stat">
           <div class="stat-figure text-success">
@@ -239,12 +249,13 @@ onUnmounted(() => {
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
           </div>
-          <div class="stat-title">มอบหมาย</div>
+          <div class="stat-title">มอบหมายแล้ว</div>
           <div class="stat-value text-success">{{ assignedCameras }}</div>
           <div class="stat-desc">{{ totalCameras > 0 ? Math.round((assignedCameras/totalCameras)*100) : 0 }}% ของทั้งหมด</div>
         </div>
       </div>
 
+      <!-- Card 3: Unassigned -->
       <div class="stats shadow bg-base-100">
         <div class="stat">
           <div class="stat-figure text-warning">
@@ -252,9 +263,45 @@ onUnmounted(() => {
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
           </div>
-          <div class="stat-title">ยังไม่ได้</div>
+          <div class="stat-title">ยังไม่มอบหมาย</div>
           <div class="stat-value text-warning">{{ unassignedCameras }}</div>
           <div class="stat-desc">รอการมอบหมาย</div>
+        </div>
+      </div>
+
+      <!-- Card 4: 4G Cameras -->
+      <div class="stats shadow bg-base-100">
+        <div class="stat">
+          <div class="stat-figure text-primary">
+            <div class="text-4xl">📡</div>
+          </div>
+          <div class="stat-title">กล้อง 4G</div>
+          <div class="stat-value text-primary">{{ camera4GCount }}</div>
+          <div class="stat-desc">{{ totalCameras > 0 ? Math.round((camera4GCount/totalCameras)*100) : 0 }}% ของทั้งหมด</div>
+        </div>
+      </div>
+
+      <!-- Card 5: WIFI Cameras -->
+      <div class="stats shadow bg-base-100">
+        <div class="stat">
+          <div class="stat-figure text-info">
+            <div class="text-4xl">📶</div>
+          </div>
+          <div class="stat-title">กล้อง WIFI</div>
+          <div class="stat-value text-info">{{ cameraWIFICount }}</div>
+          <div class="stat-desc">{{ totalCameras > 0 ? Math.round((cameraWIFICount/totalCameras)*100) : 0 }}% ของทั้งหมด</div>
+        </div>
+      </div>
+
+      <!-- Card 6: Tactical Cameras -->
+      <div class="stats shadow bg-base-100">
+        <div class="stat">
+          <div class="stat-figure text-warning">
+            <div class="text-4xl">🎯</div>
+          </div>
+          <div class="stat-title">กล้อง Tactical</div>
+          <div class="stat-value text-warning">{{ cameraTacticalCount }}</div>
+          <div class="stat-desc">{{ totalCameras > 0 ? Math.round((cameraTacticalCount/totalCameras)*100) : 0 }}% ของทั้งหมด</div>
         </div>
       </div>
     </div>
@@ -280,7 +327,6 @@ onUnmounted(() => {
             </select>
           </div>
 
-          <!-- ปุ่มสลับ View (เฉพาะหน้าจอใหญ่) -->
           <div v-if="isLargeScreen" class="form-control">
             <div class="join">
               <button 
@@ -314,7 +360,7 @@ onUnmounted(() => {
       <span class="loading loading-spinner loading-lg text-primary"></span>
     </div>
 
-    <!-- Table View (เฉพาะหน้าจอใหญ่) -->
+    <!-- Table View -->
     <div v-else-if="!loading && filteredCameras.length > 0 && effectiveViewMode === 'table' && isLargeScreen" class="block">
       <div class="card bg-base-100 shadow-lg overflow-hidden">
         <div class="overflow-x-auto">
@@ -322,15 +368,17 @@ onUnmounted(() => {
             <thead class="bg-base-200">
               <tr>
                 <th class="w-20">รูปภาพ</th>
+                <th>ประเภท</th>
                 <th>Camera UID</th>
                 <th>จุดติดตั้ง</th>
-                <th>สถานะ</th>
+                <th class="w-20 text-center">สถานะ</th>
                 <th>เจ้าหน้าที่</th>
                 <th>พิกัด</th>
               </tr>
             </thead>
             <tbody>
               <tr v-for="camera in filteredCameras" :key="camera.id" class="hover">
+                <!-- รูปภาพ -->
                 <td>
                   <div class="avatar">
                     <div class="w-16 h-16 rounded-lg">
@@ -350,6 +398,16 @@ onUnmounted(() => {
                     </div>
                   </div>
                 </td>
+
+                <!-- ประเภทกล้อง -->
+                <td>
+                  <div class="badge badge-lg gap-2" :class="getCameraTypeInfo(camera.cameraType || '4G').color">
+                    <span>{{ getCameraTypeInfo(camera.cameraType || '4G').icon }}</span>
+                    <span class="text-xs font-semibold">{{ getCameraTypeInfo(camera.cameraType || '4G').label }}</span>
+                  </div>
+                </td>
+
+                <!-- Camera UID -->
                 <td>
                   <button
                     @click="copyToClipboard(camera.cameraID, `คัดลอก ${camera.cameraID} แล้ว ✅`)"
@@ -359,29 +417,43 @@ onUnmounted(() => {
                     {{ camera.cameraID }}
                   </button>
                 </td>
+
+                <!-- จุดติดตั้ง -->
                 <td>
                   <div class="font-medium">{{ camera.cameraName }}</div>
                 </td>
-                <td>
-                  <div v-if="isAssigned(camera.cameraID)" class="badge badge-success gap-1">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+
+                <!-- สถานะ (แค่ไอคอน) -->
+                <td class="text-center">
+                  <div 
+                    v-if="isAssigned(camera.cameraID)" 
+                    class="tooltip tooltip-success" 
+                    data-tip="มอบหมายแล้ว"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-success mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
-                    Assigned
                   </div>
-                  <div v-else class="badge badge-warning gap-1">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <div 
+                    v-else 
+                    class="tooltip tooltip-warning" 
+                    data-tip="ยังไม่มอบหมาย"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-warning mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
-                    Available
                   </div>
                 </td>
+
+                <!-- เจ้าหน้าที่ -->
                 <td>
                   <div v-if="isAssigned(camera.cameraID)" class="text-sm">
                     <div class="font-medium">{{ getAssignedOfficer(camera.cameraID) }}</div>
                   </div>
                   <div v-else class="text-sm text-base-content/50">-</div>
                 </td>
+
+                <!-- พิกัด -->
                 <td>
                   <div v-if="camera.latitude && camera.longitude" class="flex items-center gap-1">
                     <button 
@@ -436,16 +508,17 @@ onUnmounted(() => {
         </figure>
 
         <div class="card-body">
-          <!-- Camera Icon & Status Badge -->
-          <div class="flex justify-between items-start mb-2">
-            <div class="avatar placeholder">
-              <div class="bg-primary text-primary-content rounded-full w-12">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                </svg>
+          <!-- Badge ประเภท & สถานะ -->
+          <div class="flex justify-between items-start mb-4">
+            <div class="flex flex-col gap-2">
+              <!-- Badge ประเภทกล้อง -->
+              <div class="badge badge-lg gap-2" :class="getCameraTypeInfo(camera.cameraType || '4G').color">
+                <span class="text-lg">{{ getCameraTypeInfo(camera.cameraType || '4G').icon }}</span>
+                <span class="font-semibold">{{ getCameraTypeInfo(camera.cameraType || '4G').label }}</span>
               </div>
             </div>
             
+            <!-- Status Badge -->
             <div v-if="isAssigned(camera.cameraID)" class="badge badge-success badge-lg gap-2">
               <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
@@ -467,13 +540,13 @@ onUnmounted(() => {
 
           <!-- Camera UID -->
           <p class="text-sm text-base-content/70">
-            <span class="font-semibold">UID: </span> 
+            
             <button 
               @click="copyToClipboard(camera.cameraID, `คัดลอก ${camera.cameraID} แล้ว ✅`)"
-              class="badge badge-info hover:badge-primary transition-colors cursor-pointer"
+              class="btn btn-soft btn-primary btn-sm hover:badge-primary transition-colors cursor-pointer"
               title="คลิกเพื่อคัดลอก"
             >
-              {{ camera.cameraID }}
+              <span class="font-semibold">UID: </span> {{ camera.cameraID }}
             </button>
           </p>
 
@@ -539,7 +612,6 @@ onUnmounted(() => {
 </template>
 
 <style scoped>
-/* Animation */
 .card {
   transition: transform 0.2s ease-in-out;
 }
@@ -548,7 +620,6 @@ onUnmounted(() => {
   transform: translateY(-4px);
 }
 
-/* Figure hover effect */
 figure img {
   transition: transform 0.3s ease-in-out;
 }
