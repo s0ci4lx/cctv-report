@@ -114,8 +114,14 @@ const filteredCameras = computed(() => {
 
 // 👇 เพิ่มฟังก์ชันสำหรับคลิก Card
 const filterByType = (type) => {
-  filterCameraType.value = type;
+  // ถ้าคลิกซ้ำประเภทเดิม → ยกเลิกการกรอง
+  if (filterCameraType.value === type) {
+    filterCameraType.value = "all";   // กลับไปแสดงทั้งหมด
+  } else {
+    filterCameraType.value = type;    // กรองตามประเภทใหม่
+  }
 };
+
 // นับจำนวนกล้องแต่ละประเภท
 const camera4GCount = computed(
   () => cameras.value.filter((c) => (c.cameraType || "4G") === "4G").length

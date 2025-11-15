@@ -98,7 +98,12 @@ const filteredCameras = computed(() => {
 
 // 👇 เพิ่มฟังก์ชันสำหรับคลิก Card
 const filterByType = (type) => {
-  filterCameraType.value = type;
+  // ถ้าคลิกซ้ำประเภทเดิม → ยกเลิกการกรอง
+  if (filterCameraType.value === type) {
+    filterCameraType.value = "all";   // กลับไปแสดงทั้งหมด
+  } else {
+    filterCameraType.value = type;    // กรองตามประเภทใหม่
+  }
 };
 
 // --- Functions ---

@@ -146,7 +146,7 @@ const fetchAssignments = async () => {
     });
   } catch (e) {
     console.error("Error fetching assignments: ", e);
-    showAlert("เกิดข้อผิดพลาดในการดึงข้อมูล", { type: 'error' });
+    showAlert("เกิดข้อผิดพลาดในการดึงข้อมูล", { type: "error" });
   }
 };
 
@@ -203,7 +203,7 @@ const handleAddAssignment = async () => {
     showToast("เพิ่ม Assignment สำเร็จ ✅", "success");
   } catch (e) {
     console.error("Error adding document: ", e);
-    showAlert("เกิดข้อผิดพลาดในการเพิ่มข้อมูล", { type: 'error' });
+    showAlert("เกิดข้อผิดพลาดในการเพิ่มข้อมูล", { type: "error" });
   }
 };
 
@@ -212,11 +212,11 @@ const handleDeleteAssignment = async (id, cameraID) => {
   const cameraName = camera ? camera.cameraName : cameraID;
 
   const confirmed = await showConfirm({
-    title: 'ยืนยันการลบ',
+    title: "ยืนยันการลบ",
     message: `คุณแน่ใจหรือไม่ว่าต้องการลบการมอบหมาย<br/><strong>"${cameraName}"</strong>?`,
-    confirmText: 'ลบ',
-    cancelText: 'ยกเลิก',
-    type: 'error'
+    confirmText: "ลบ",
+    cancelText: "ยกเลิก",
+    type: "error",
   });
 
   if (!confirmed) return;
@@ -227,7 +227,7 @@ const handleDeleteAssignment = async (id, cameraID) => {
     showToast("ลบสำเร็จ ✅", "success");
   } catch (e) {
     console.error("Error deleting document: ", e);
-    showAlert("เกิดข้อผิดพลาดในการลบข้อมูล", { type: 'error' });
+    showAlert("เกิดข้อผิดพลาดในการลบข้อมูล", { type: "error" });
   }
 };
 
@@ -257,7 +257,7 @@ const handleUpdateAssignment = async () => {
     showToast("อัปเดตสำเร็จ ✅", "success");
   } catch (e) {
     console.error("Error updating document: ", e);
-    showAlert("เกิดข้อผิดพลาดในการอัปเดตข้อมูล", { type: 'error' });
+    showAlert("เกิดข้อผิดพลาดในการอัปเดตข้อมูล", { type: "error" });
   }
 };
 
@@ -282,16 +282,16 @@ const toggleSelect = (id) => {
 
 const handleBulkDelete = async () => {
   if (selectedIds.value.size === 0) {
-    showAlert("กรุณาเลือกรายการที่ต้องการลบ", { type: 'warning' });
+    showAlert("กรุณาเลือกรายการที่ต้องการลบ", { type: "warning" });
     return;
   }
 
   const confirmed = await showConfirm({
-    title: 'ยืนยันการลบหลายรายการ',
+    title: "ยืนยันการลบหลายรายการ",
     message: `คุณแน่ใจหรือไม่ว่าต้องการลบ <strong>${selectedIds.value.size}</strong> รายการ?`,
-    confirmText: 'ลบทั้งหมด',
-    cancelText: 'ยกเลิก',
-    type: 'error'
+    confirmText: "ลบทั้งหมด",
+    cancelText: "ยกเลิก",
+    type: "error",
   });
 
   if (!confirmed) return;
@@ -306,11 +306,9 @@ const handleBulkDelete = async () => {
     showToast(`ลบ ${deletePromises.length} รายการสำเร็จ ✅`, "success");
   } catch (e) {
     console.error("Error bulk deleting: ", e);
-    showAlert("เกิดข้อผิดพลาดในการลบข้อมูล", { type: 'error' });
+    showAlert("เกิดข้อผิดพลาดในการลบข้อมูล", { type: "error" });
   }
 };
-
-
 
 const getOfficerName = (email) => {
   const officer = officersList.value.find((o) => o.email === email);
@@ -327,8 +325,6 @@ const copyToClipboard = async (text, successMessage = "คัดลอกแล�
     showToast("ไม่สามารถคัดลอกได้ ❌", "error");
   }
 };
-
-
 
 // --- Lifecycle ---
 onMounted(async () => {
@@ -599,7 +595,7 @@ onMounted(async () => {
                         `คัดลอก ${item.cameraID} แล้ว ✅`
                       )
                     "
-                    class="btn btn-soft btn-primary btn-sm  hover:badge-primary transition-colors cursor-pointer"
+                    class="btn btn-soft btn-primary btn-sm hover:badge-primary transition-colors cursor-pointer"
                     title="คลิกเพื่อคัดลอก"
                   >
                     {{ item.cameraID }}
@@ -796,7 +792,7 @@ onMounted(async () => {
                     d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
                   />
                 </svg>
-                
+
                 {{ getCameraInfo(item.cameraID).latitude.toFixed(4) }},
                 {{ getCameraInfo(item.cameraID).longitude.toFixed(4) }}
               </div>
@@ -954,251 +950,152 @@ onMounted(async () => {
     </div>
 
     <!-- Modal: Add Assignment -->
-<dialog id="add_assignment_modal" class="modal">
-  <div class="modal-box max-w-2xl">
-    <!-- Header -->
-    <div class="flex items-center gap-3 mb-6 pb-4 border-b border-base-300">
-      <div class="p-3 bg-primary/10 rounded-lg">
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          class="h-6 w-6 text-primary"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-        >
-          <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            stroke-width="2"
-            d="M12 4v16m8-8H4"
-          />
-        </svg>
-      </div>
-      <div>
-        <h3 class="font-bold text-2xl">เพิ่ม Assignment ใหม่</h3>
-        <p class="text-sm text-base-content/60">มอบหมายกล้องให้เจ้าหน้าที่รับผิดชอบ</p>
-      </div>
-    </div>
-
-    <form @submit.prevent="handleAddAssignment" class="space-y-6">
-      <!-- ข้อมูล Assignment -->
-      <div class="space-y-4">
-        <div class="flex items-center gap-2">
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-          </svg>
-          <h4 class="font-semibold text-lg">ข้อมูลการมอบหมาย</h4>
+    <dialog id="add_assignment_modal" class="modal">
+      <div class="modal-box max-w-2xl">
+        <!-- Header -->
+        <div class="flex items-center gap-3 mb-6 pb-4 border-b border-base-300">
+          <div class="p-3 bg-primary/10 rounded-lg">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              class="h-6 w-6 text-primary"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M12 4v16m8-8H4"
+              />
+            </svg>
+          </div>
+          <div>
+            <h3 class="font-bold text-2xl">เพิ่ม Assignment ใหม่</h3>
+            <p class="text-sm text-base-content/60">
+              มอบหมายกล้องให้เจ้าหน้าที่รับผิดชอบ
+            </p>
+          </div>
         </div>
 
-        <!-- Officer Select -->
-        <label class="form-control w-full">
-          <div class="label">
-            <span class="label-text font-medium">
-              เจ้าหน้าที่รับผิดชอบ <span class="text-error">*</span>
-            </span>
-          </div>
-          <select
-            v-model="newAssignment.officerEmail"
-            class="select select-bordered w-full"
-            :class="{ 'select-error': formErrors.officerEmail }"
-            required
-          >
-            <option disabled value="">โปรดเลือกเจ้าหน้าที่</option>
-            <option
-              v-for="officer in officersList"
-              :key="officer.email"
-              :value="officer.email"
-            >
-              👤 {{ officer.name }} ({{ officer.email }})
-            </option>
-          </select>
-          <div class="label" v-if="formErrors.officerEmail">
-            <span class="label-text-alt text-error flex items-center gap-1">
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+        <form @submit.prevent="handleAddAssignment" class="space-y-6">
+          <!-- ข้อมูล Assignment -->
+          <div class="space-y-4">
+            <div class="flex items-center gap-2">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                class="h-5 w-5 text-primary"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                />
               </svg>
-              {{ formErrors.officerEmail }}
-            </span>
-          </div>
-        </label>
+              <h4 class="font-semibold text-lg">ข้อมูลการมอบหมาย</h4>
+            </div>
 
-        <!-- Camera Select -->
-        <label class="form-control w-full">
-          <div class="label">
-            <span class="label-text font-medium">
-              เลือกกล้อง <span class="text-error">*</span>
-            </span>
-            <span class="label-text-alt">{{ availableCameras.length }} กล้องว่าง</span>
-          </div>
-          <select
-            v-model="newAssignment.cameraID"
-            class="select select-bordered w-full"
-            :class="{ 'select-error': formErrors.cameraID }"
-            required
-          >
-            <option disabled value="">โปรดเลือกกล้อง</option>
-            <option
-              v-for="camera in availableCameras"
-              :key="camera.cameraID"
-              :value="camera.cameraID"
-            >
-              📹 {{ camera.cameraID }} - {{ camera.cameraName }}
-            </option>
-          </select>
-          <div class="label" v-if="formErrors.cameraID">
-            <span class="label-text-alt text-error flex items-center gap-1">
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              {{ formErrors.cameraID }}
-            </span>
-          </div>
-          <div class="label" v-else>
-            <span class="label-text-alt">เฉพาะกล้องที่ยังไม่ถูกมอบหมาย</span>
-          </div>
-        </label>
-      </div>
+            <!-- Officer Select -->
+            <label class="form-control w-full">
+              <div class="label">
+                <span class="label-text font-medium">
+                  เจ้าหน้าที่รับผิดชอบ <span class="text-error">*</span>
+                </span>
+              </div>
+              <select
+                v-model="newAssignment.officerEmail"
+                class="select select-bordered w-full"
+                :class="{ 'select-error': formErrors.officerEmail }"
+                required
+              >
+                <option disabled value="">โปรดเลือกเจ้าหน้าที่</option>
+                <option
+                  v-for="officer in officersList"
+                  :key="officer.email"
+                  :value="officer.email"
+                >
+                  👤 {{ officer.name }} ({{ officer.email }})
+                </option>
+              </select>
+              <div class="label" v-if="formErrors.officerEmail">
+                <span class="label-text-alt text-error flex items-center gap-1">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    class="h-3 w-3"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                    />
+                  </svg>
+                  {{ formErrors.officerEmail }}
+                </span>
+              </div>
+            </label>
 
-      <!-- Camera Preview -->
-      <div v-if="newAssignment.cameraID" class="alert alert-info">
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          fill="none"
-          viewBox="0 0 24 24"
-          class="stroke-current shrink-0 w-6 h-6"
-        >
-          <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            stroke-width="2"
-            d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-          />
-        </svg>
-        <div class="text-sm">
-          <div class="font-bold">
-            {{ getCameraInfo(newAssignment.cameraID)?.cameraName }}
+            <!-- Camera Select -->
+            <label class="form-control w-full">
+              <div class="label mt-2">
+                <span class="label-text font-medium">
+                  เลือกกล้อง <span class="text-error">*</span>
+                </span>
+                <span class="label-text-alt"
+                  >{{ availableCameras.length }} กล้องว่าง</span
+                >
+              </div>
+              <select
+                v-model="newAssignment.cameraID"
+                class="select select-bordered w-full"
+                :class="{ 'select-error': formErrors.cameraID }"
+                required
+              >
+                <option disabled value="">โปรดเลือกกล้อง</option>
+                <option
+                  v-for="camera in availableCameras"
+                  :key="camera.cameraID"
+                  :value="camera.cameraID"
+                >
+                  📹 {{ camera.cameraID }} - {{ camera.cameraName }}
+                </option>
+              </select>
+              <div class="label" v-if="formErrors.cameraID">
+                <span class="label-text-alt text-error flex items-center gap-1">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    class="h-3 w-3"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                    />
+                  </svg>
+                  {{ formErrors.cameraID }}
+                </span>
+              </div>
+              <div class="label" v-else>
+                <span class="label-text-alt"
+                  >เฉพาะกล้องที่ยังไม่ถูกมอบหมาย</span
+                >
+              </div>
+            </label>
           </div>
-          <div v-if="getCameraInfo(newAssignment.cameraID)?.latitude" class="text-xs opacity-80">
-            📍 พิกัด: {{ getCameraInfo(newAssignment.cameraID).latitude.toFixed(4) }}, {{ getCameraInfo(newAssignment.cameraID).longitude.toFixed(4) }}
-          </div>
-        </div>
-      </div>
 
-      <!-- Actions -->
-      <div class="flex gap-3 pt-4 border-t border-base-300">
-        <button
-          type="button"
-          class="btn btn-ghost flex-1"
-          onclick="add_assignment_modal.close()"
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-          </svg>
-          ยกเลิก
-        </button>
-        <button type="submit" class="btn btn-primary flex-1 gap-2">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            class="h-5 w-5"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-          >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M5 13l4 4L19 7"
-            />
-          </svg>
-          เพิ่ม Assignment
-        </button>
-      </div>
-    </form>
-  </div>
-  <form method="dialog" class="modal-backdrop">
-    <button>close</button>
-  </form>
-</dialog>
-
-<!-- Modal: Edit Assignment -->
-<dialog id="edit_modal" class="modal">
-  <div class="modal-box max-w-2xl">
-    <!-- Header -->
-    <div class="flex items-center gap-3 mb-6 pb-4 border-b border-base-300">
-      <div class="p-3 bg-warning/10 rounded-lg">
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          class="h-6 w-6 text-warning"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-        >
-          <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            stroke-width="2"
-            d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-          />
-        </svg>
-      </div>
-      <div>
-        <h3 class="font-bold text-2xl">แก้ไข Assignment</h3>
-        <p class="text-sm text-base-content/60">เปลี่ยนเจ้าหน้าที่รับผิดชอบกล้อง</p>
-      </div>
-    </div>
-
-    <form
-      v-if="editingAssignment"
-      @submit.prevent="handleUpdateAssignment"
-      class="space-y-6"
-    >
-      <!-- ข้อมูล Assignment -->
-      <div class="space-y-4">
-        <div class="flex items-center gap-2">
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-          </svg>
-          <h4 class="font-semibold text-lg">ข้อมูลการมอบหมาย</h4>
-        </div>
-
-        <!-- Officer Select -->
-        <label class="form-control w-full">
-          <div class="label">
-            <span class="label-text font-medium">
-              เจ้าหน้าที่รับผิดชอบ <span class="text-error">*</span>
-            </span>
-          </div>
-          <select
-            v-model="editingAssignment.officerEmail"
-            class="select select-bordered w-full"
-            :class="{ 'select-error': formErrors.officerEmail }"
-            required
-          >
-            <option
-              v-for="officer in officersList"
-              :key="officer.email"
-              :value="officer.email"
-            >
-              👤 {{ officer.name }} ({{ officer.email }})
-            </option>
-          </select>
-          <div class="label" v-if="formErrors.officerEmail">
-            <span class="label-text-alt text-error flex items-center gap-1">
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              {{ formErrors.officerEmail }}
-            </span>
-          </div>
-        </label>
-
-        <!-- Camera Display (Read-only) -->
-        <label class="form-control w-full">
-          <div class="label">
-            <span class="label-text font-medium">กล้อง</span>
-          </div>
-          <div class="alert alert-info">
+          <!-- Camera Preview -->
+          <div v-if="newAssignment.cameraID" class="alert alert-info">
             <svg
               xmlns="http://www.w3.org/2000/svg"
               fill="none"
@@ -1209,58 +1106,249 @@ onMounted(async () => {
                 stroke-linecap="round"
                 stroke-linejoin="round"
                 stroke-width="2"
-                d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"
+                d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
               />
             </svg>
-            <div>
-              <div class="font-bold">{{ editingAssignment.cameraID }}</div>
-              <div class="text-sm opacity-80">
-                {{ getCameraInfo(editingAssignment.cameraID)?.cameraName }}
+            <div class="text-sm">
+              <div class="font-bold">
+                {{ getCameraInfo(newAssignment.cameraID)?.cameraName }}
+              </div>
+              <div
+                v-if="getCameraInfo(newAssignment.cameraID)?.latitude"
+                class="text-xs opacity-80"
+              >
+                📍 พิกัด:
+                {{ getCameraInfo(newAssignment.cameraID).latitude.toFixed(4) }},
+                {{ getCameraInfo(newAssignment.cameraID).longitude.toFixed(4) }}
               </div>
             </div>
           </div>
-          <div class="label">
-            <span class="label-text-alt">ไม่สามารถเปลี่ยนกล้องได้ กรุณาลบแล้วสร้างใหม่</span>
-          </div>
-        </label>
-      </div>
 
-      <!-- Actions -->
-      <div class="flex gap-3 pt-4 border-t border-base-300">
-        <button
-          type="button"
-          class="btn btn-ghost flex-1"
-          onclick="edit_modal.close()"
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-          </svg>
-          ยกเลิก
-        </button>
-        <button type="submit" class="btn btn-warning flex-1 gap-2">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            class="h-5 w-5"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-          >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M5 13l4 4L19 7"
-            />
-          </svg>
-          บันทึกการเปลี่ยนแปลง
-        </button>
+          <!-- Actions -->
+          <div class="flex gap-3 pt-4 border-t border-base-300">
+            <button
+              type="button"
+              class="btn btn-ghost flex-1"
+              onclick="add_assignment_modal.close()"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                class="h-5 w-5"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M6 18L18 6M6 6l12 12"
+                />
+              </svg>
+              ยกเลิก
+            </button>
+            <button type="submit" class="btn btn-primary flex-1 gap-2">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                class="h-5 w-5"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M5 13l4 4L19 7"
+                />
+              </svg>
+              เพิ่ม Assignment
+            </button>
+          </div>
+        </form>
       </div>
-    </form>
-  </div>
-  <form method="dialog" class="modal-backdrop">
-    <button>close</button>
-  </form>
-</dialog>
+      <form method="dialog" class="modal-backdrop">
+        <button>close</button>
+      </form>
+    </dialog>
+
+    <!-- Modal: Edit Assignment -->
+    <dialog id="edit_modal" class="modal">
+      <div class="modal-box max-w-2xl">
+        <!-- Header -->
+        <div class="flex items-center gap-3 mb-6 pb-4 border-b border-base-300">
+          <div class="p-3 bg-warning/10 rounded-lg">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              class="h-6 w-6 text-warning"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+              />
+            </svg>
+          </div>
+          <div>
+            <h3 class="font-bold text-2xl">แก้ไข Assignment</h3>
+            <p class="text-sm text-base-content/60">
+              เปลี่ยนเจ้าหน้าที่รับผิดชอบกล้อง
+            </p>
+          </div>
+        </div>
+
+        <form
+          v-if="editingAssignment"
+          @submit.prevent="handleUpdateAssignment"
+          class="space-y-6"
+        >
+          <!-- ข้อมูล Assignment -->
+          <div class="space-y-4">
+            <div class="flex items-center gap-2">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                class="h-5 w-5 text-primary"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                />
+              </svg>
+              <h4 class="font-semibold text-lg">ข้อมูลการมอบหมาย</h4>
+            </div>
+
+            <!-- Officer Select -->
+            <label class="form-control w-full">
+              <div class="label">
+                <span class="label-text font-medium">
+                  เจ้าหน้าที่รับผิดชอบ <span class="text-error">*</span>
+                </span>
+              </div>
+              <select
+                v-model="editingAssignment.officerEmail"
+                class="select select-bordered w-full"
+                :class="{ 'select-error': formErrors.officerEmail }"
+                required
+              >
+                <option
+                  v-for="officer in officersList"
+                  :key="officer.email"
+                  :value="officer.email"
+                >
+                  👤 {{ officer.name }} ({{ officer.email }})
+                </option>
+              </select>
+              <div class="label" v-if="formErrors.officerEmail">
+                <span class="label-text-alt text-error flex items-center gap-1">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    class="h-3 w-3"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                    />
+                  </svg>
+                  {{ formErrors.officerEmail }}
+                </span>
+              </div>
+            </label>
+
+            <!-- Camera Display (Read-only) -->
+            <label class="form-control w-full">
+              <div class="label">
+                <span class="label-text font-medium">กล้อง</span>
+              </div>
+              <div class="alert alert-info">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  class="stroke-current shrink-0 w-6 h-6"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"
+                  />
+                </svg>
+                <div>
+                  <div class="font-bold">{{ editingAssignment.cameraID }}</div>
+                  <div class="text-sm opacity-80">
+                    {{ getCameraInfo(editingAssignment.cameraID)?.cameraName }}
+                  </div>
+                </div>
+              </div>
+              <div class="label">
+                <span class="label-text-alt"
+                  >ไม่สามารถเปลี่ยนกล้องได้ กรุณาลบแล้วสร้างใหม่</span
+                >
+              </div>
+            </label>
+          </div>
+
+          <!-- Actions -->
+          <div class="flex gap-3 pt-4 border-t border-base-300">
+            <button
+              type="button"
+              class="btn btn-ghost flex-1"
+              onclick="edit_modal.close()"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                class="h-5 w-5"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M6 18L18 6M6 6l12 12"
+                />
+              </svg>
+              ยกเลิก
+            </button>
+            <button type="submit" class="btn btn-warning flex-1 gap-2">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                class="h-5 w-5"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M5 13l4 4L19 7"
+                />
+              </svg>
+              บันทึกการเปลี่ยนแปลง
+            </button>
+          </div>
+        </form>
+      </div>
+      <form method="dialog" class="modal-backdrop">
+        <button>close</button>
+      </form>
+    </dialog>
   </div>
 </template>
 
