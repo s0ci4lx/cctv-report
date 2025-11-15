@@ -222,6 +222,21 @@ const validateForm = (data) => {
 
   return isValid;
 };
+// 👇 เพิ่ม methods สำหรับปิด modal
+const closeAddModal = () => {
+  const modal = document.getElementById("add_camera_modal");
+  if (modal) {
+    modal.close();
+  }
+};
+
+const closeEditModal = () => {
+  const modal = document.getElementById("edit_camera_modal");
+  if (modal) {
+    modal.close();
+    editingCamera.value = null;
+  }
+};
 
 // 👇 แก้ไข openAddModal
 const openAddModal = () => {
@@ -598,19 +613,19 @@ onUnmounted(() => {
               v-model="searchQuery"
               type="text"
               placeholder="ค้นหา UID หรือจุดติดตั้ง..."
-              class="input input-bordered flex-1"
+              class="input input-bordered flex-1 w-full"
             />
           </div>
 
           <div class="form-control">
-            <select v-model="sortBy" class="select select-bordered">
+            <select v-model="sortBy" class="select select-bordered w-full">
               <option value="cameraID">เรียงตาม: Camera UID</option>
               <option value="cameraName">เรียงตาม: จุดติดตั้ง</option>
               <option value="status">เรียงตาม: สถานะ</option>
             </select>
           </div>
 
-          <div v-if="isLargeScreen" class="form-control">
+          <div v-if="isLargeScreen" class="form-control my-auto">
             <div class="join">
               <button
                 class="join-item btn btn-sm gap-2"
@@ -768,20 +783,16 @@ onUnmounted(() => {
                   <div class="font-bold">{{ camera.cameraName }}</div>
                 </td>
 
-                <!-- สถานะ -->
-                <td>
+                <!-- สถานะ (แค่ไอคอน) -->
+                <td class="text-center">
                   <div
-                    class="badge badge-md gap-2"
-                    :class="
-                      isAssigned(camera.cameraID)
-                        ? 'badge-success'
-                        : 'badge-warning'
-                    "
+                    v-if="isAssigned(camera.cameraID)"
+                    class="tooltip tooltip-success"
+                    data-tip="มอบหมายแล้ว"
                   >
                     <svg
-                      v-if="isAssigned(camera.cameraID)"
                       xmlns="http://www.w3.org/2000/svg"
-                      class="h-4 w-4"
+                      class="h-6 w-6 text-success mx-auto"
                       fill="none"
                       viewBox="0 0 24 24"
                       stroke="currentColor"
@@ -790,13 +801,18 @@ onUnmounted(() => {
                         stroke-linecap="round"
                         stroke-linejoin="round"
                         stroke-width="2"
-                        d="M5 13l4 4L19 7"
+                        d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
                       />
                     </svg>
+                  </div>
+                  <div
+                    v-else
+                    class="tooltip tooltip-warning"
+                    data-tip="ยังไม่มอบหมาย"
+                  >
                     <svg
-                      v-else
                       xmlns="http://www.w3.org/2000/svg"
-                      class="h-4 w-4"
+                      class="h-6 w-6 text-warning mx-auto"
                       fill="none"
                       viewBox="0 0 24 24"
                       stroke="currentColor"
@@ -808,7 +824,6 @@ onUnmounted(() => {
                         d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
                       />
                     </svg>
-                    
                   </div>
                 </td>
 
@@ -1041,15 +1056,15 @@ onUnmounted(() => {
           <h2 class="card-title text-lg">{{ camera.cameraName }}</h2>
           <p class="text-sm text-base-content/70">
             <button
-            @click="
+              @click="
                 copyToClipboard(
                   camera.cameraID,
                   `คัดลอก ${camera.cameraID} แล้ว ✅`
                 )
-                "
+              "
               class="btn btn-soft btn-primary btn-sm hover:badge-primary transition-colors cursor-pointer"
               title="คลิกเพื่อคัดลอก"
-              >
+            >
               <span class="font-semibold">UID: </span> {{ camera.cameraID }}
             </button>
           </p>
@@ -1185,181 +1200,335 @@ onUnmounted(() => {
 
     <!-- Modal: Add Camera -->
     <dialog id="add_camera_modal" class="modal">
-      <div class="modal-box max-w-2xl">
-        <h3 class="font-bold text-2xl mb-4 flex items-center gap-2">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            class="h-6 w-6 text-primary"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-          >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M12 4v16m8-8H4"
-            />
-          </svg>
-          เพิ่มกล้องใหม่
-        </h3>
+      <div class="modal-box max-w-3xl">
+        <!-- Header -->
+        <div class="flex items-center gap-3 mb-6 pb-4 border-b border-base-300">
+          <div class="p-3 bg-primary/10 rounded-lg">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              class="h-6 w-6 text-primary"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M12 4v16m8-8H4"
+              />
+            </svg>
+          </div>
+          <div>
+            <h3 class="font-bold text-2xl">เพิ่มกล้องใหม่</h3>
+            <p class="text-sm text-base-content/60">
+              กรอกข้อมูลกล้องวงจรปิดเพื่อเพิ่มเข้าสู่ระบบ
+            </p>
+          </div>
+        </div>
 
-        <form @submit.prevent="handleAddCamera" class="space-y-4">
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <!-- Camera UID -->
-            <div class="form-control">
-              <label class="label">
-                <span class="label-text font-semibold"
-                  >Camera UID <span class="text-error">*</span></span
-                >
+        <form @submit.prevent="handleAddCamera" class="space-y-6">
+          <!-- ข้อมูลพื้นฐาน -->
+          <div class="space-y-4">
+            <div class="flex items-center gap-2">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                class="h-5 w-5 text-primary"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                />
+              </svg>
+              <h4 class="font-semibold text-lg">ข้อมูลพื้นฐาน</h4>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <!-- Camera UID -->
+              <label class="form-control w-full">
+                <div class="label">
+                  <span class="label-text font-medium">
+                    Camera UID <span class="text-error">*</span>
+                  </span>
+                </div>
+                <input
+                  v-model="newCamera.cameraID"
+                  type="text"
+                  placeholder="เช่น CAM-001"
+                  class="input input-bordered w-full"
+                  :class="{ 'input-error': formErrors.cameraID }"
+                  required
+                />
+                <div class="label" v-if="formErrors.cameraID">
+                  <span
+                    class="label-text-alt text-error flex items-center gap-1"
+                  >
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      class="h-3 w-3"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                      />
+                    </svg>
+                    {{ formErrors.cameraID }}
+                  </span>
+                </div>
               </label>
+
+              <!-- Camera Type -->
+              <label class="form-control w-full">
+                <div class="label">
+                  <span class="label-text font-medium">
+                    ประเภทกล้อง <span class="text-error">*</span>
+                  </span>
+                </div>
+                <select
+                  v-model="newCamera.cameraType"
+                  class="select select-bordered w-full"
+                  :class="{ 'select-error': formErrors.cameraType }"
+                  required
+                >
+                  <option
+                    v-for="type in cameraTypes"
+                    :key="type.value"
+                    :value="type.value"
+                  >
+                    {{ type.icon }} {{ type.label }}
+                  </option>
+                </select>
+                <div class="label" v-if="formErrors.cameraType">
+                  <span
+                    class="label-text-alt text-error flex items-center gap-1"
+                  >
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      class="h-3 w-3"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                      />
+                    </svg>
+                    {{ formErrors.cameraType }}
+                  </span>
+                </div>
+              </label>
+            </div>
+
+            <!-- Camera Name (full width) -->
+            <label class="form-control w-full">
+              <div class="label">
+                <span class="label-text font-medium">
+                  จุดติดตั้ง <span class="text-error">*</span>
+                </span>
+              </div>
               <input
-                v-model="newCamera.cameraID"
+                v-model="newCamera.cameraName"
                 type="text"
-                placeholder="CAM-001"
-                class="input input-bordered"
-                :class="{ 'input-error': formErrors.cameraID }"
+                placeholder="เช่น กล้องหน้าห้องขัง A1"
+                class="input input-bordered w-full"
+                :class="{ 'input-error': formErrors.cameraName }"
                 required
               />
-              <label v-if="formErrors.cameraID" class="label">
-                <span class="label-text-alt text-error">{{
-                  formErrors.cameraID
-                }}</span>
-              </label>
-            </div>
+              <div class="label" v-if="formErrors.cameraName">
+                <span class="label-text-alt text-error flex items-center gap-1">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    class="h-3 w-3"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                    />
+                  </svg>
+                  {{ formErrors.cameraName }}
+                </span>
+              </div>
+            </label>
+          </div>
 
-            <!-- 👇 Camera Type (เพิ่มใหม่) -->
-            <div class="form-control">
-              <label class="label">
-                <span class="label-text font-semibold"
-                  >ประเภทกล้อง <span class="text-error">*</span></span
-                >
-              </label>
-              <select
-                v-model="newCamera.cameraType"
-                class="select select-bordered"
-                required
+          <div class="divider"></div>
+
+          <!-- พิกัดที่ตั้ง -->
+          <div class="space-y-4">
+            <div class="flex items-center gap-2">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                class="h-5 w-5 text-error"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
               >
-                <option
-                  v-for="type in cameraTypes"
-                  :key="type.value"
-                  :value="type.value"
-                >
-                  {{ type.icon }} {{ type.label }}
-                </option>
-              </select>
-              <label v-if="formErrors.cameraType" class="label">
-                <span class="label-text-alt text-error">{{
-                  formErrors.cameraType
-                }}</span>
-              </label>
-            </div>
-          </div>
-
-          <!-- Camera Name (full width) -->
-          <div class="form-control">
-            <label class="label">
-              <span class="label-text font-semibold"
-                >จุดติดตั้ง <span class="text-error">*</span></span
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
+                />
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
+                />
+              </svg>
+              <h4 class="font-semibold text-lg">พิกัดที่ตั้ง</h4>
+              <span class="text-xs font-normal text-base-content/60"
+                >(ไม่บังคับ)</span
               >
-            </label>
-            <input
-              v-model="newCamera.cameraName"
-              type="text"
-              placeholder="กล้องหน้าห้องขัง A1"
-              class="input input-bordered"
-              :class="{ 'input-error': formErrors.cameraName }"
-              required
-            />
-            <label v-if="formErrors.cameraName" class="label">
-              <span class="label-text-alt text-error">{{
-                formErrors.cameraName
-              }}</span>
-            </label>
-          </div>
-
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <!-- Latitude -->
-            <div class="form-control">
-              <label class="label">
-                <span class="label-text font-semibold">ละติจูด (Latitude)</span>
-              </label>
-              <input
-                v-model="newCamera.latitude"
-                type="number"
-                step="any"
-                placeholder="7.0067"
-                class="input input-bordered"
-                :class="{ 'input-error': formErrors.latitude }"
-              />
-              <label v-if="formErrors.latitude" class="label">
-                <span class="label-text-alt text-error">{{
-                  formErrors.latitude
-                }}</span>
-              </label>
-              <label v-else class="label">
-                <span class="label-text-alt">ค่าระหว่าง -90 ถึง 90</span>
-              </label>
             </div>
 
-            <!-- Longitude -->
-            <div class="form-control">
-              <label class="label">
-                <span class="label-text font-semibold"
-                  >ลองจิจูด (Longitude)</span
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <!-- Latitude -->
+              <label class="form-control w-full">
+                <div class="label">
+                  <span class="label-text font-medium">ละติจูด (Latitude)</span>
+                </div>
+                <input
+                  v-model="newCamera.latitude"
+                  type="number"
+                  step="any"
+                  placeholder="7.0067"
+                  class="input input-bordered w-full"
+                  :class="{ 'input-error': formErrors.latitude }"
+                />
+                <div class="label">
+                  <span
+                    class="label-text-alt"
+                    :class="formErrors.latitude ? 'text-error' : ''"
+                  >
+                    {{ formErrors.latitude || "ค่าระหว่าง -90 ถึง 90" }}
+                  </span>
+                </div>
+              </label>
+
+              <!-- Longitude -->
+              <label class="form-control w-full">
+                <div class="label">
+                  <span class="label-text font-medium"
+                    >ลองจิจูด (Longitude)</span
+                  >
+                </div>
+                <input
+                  v-model="newCamera.longitude"
+                  type="number"
+                  step="any"
+                  placeholder="100.4925"
+                  class="input input-bordered w-full"
+                  :class="{ 'input-error': formErrors.longitude }"
+                />
+                <div class="label">
+                  <span
+                    class="label-text-alt"
+                    :class="formErrors.longitude ? 'text-error' : ''"
+                  >
+                    {{ formErrors.longitude || "ค่าระหว่าง -180 ถึง 180" }}
+                  </span>
+                </div>
+              </label>
+            </div>
+          </div>
+
+          <div class="divider"></div>
+
+          <!-- ภาพมุมกล้อง -->
+          <div class="space-y-4">
+            <div class="flex items-center gap-2">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                class="h-5 w-5 text-info"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+                />
+              </svg>
+              <h4 class="font-semibold text-lg">ภาพมุมกล้อง</h4>
+              <span class="text-xs font-normal text-base-content/60"
+                >(ไม่บังคับ)</span
+              >
+            </div>
+
+            <label class="form-control w-full">
+              <label
+                class="input input-bordered w-full"
+                :class="{ 'input-error': formErrors.photoURL }"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  class="h-4 w-4 opacity-70"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
                 >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"
+                  />
+                </svg>
+                <input
+                  v-model="newCamera.photoURL"
+                  type="url"
+                  class="grow"
+                  placeholder="https://example.com/image.jpg"
+                />
               </label>
-              <input
-                v-model="newCamera.longitude"
-                type="number"
-                step="any"
-                placeholder="100.4925"
-                class="input input-bordered"
-                :class="{ 'input-error': formErrors.longitude }"
-              />
-              <label v-if="formErrors.longitude" class="label">
-                <span class="label-text-alt text-error">{{
-                  formErrors.longitude
-                }}</span>
-              </label>
-              <label v-else class="label">
-                <span class="label-text-alt">ค่าระหว่าง -180 ถึง 180</span>
-              </label>
-            </div>
-          </div>
-
-          <!-- Photo URL -->
-          <div class="form-control">
-            <label class="label">
-              <span class="label-text font-semibold">URL ภาพมุมกล้อง</span>
-            </label>
-            <input
-              v-model="newCamera.photoURL"
-              type="url"
-              placeholder="https://example.com/image.jpg"
-              class="input input-bordered"
-              :class="{ 'input-error': formErrors.photoURL }"
-            />
-            <label v-if="formErrors.photoURL" class="label">
-              <span class="label-text-alt text-error">{{
-                formErrors.photoURL
-              }}</span>
-            </label>
-            <label v-else class="label">
-              <span class="label-text-alt">URL ของภาพมุมกล้อง (ไม่บังคับ)</span>
             </label>
           </div>
 
           <!-- Actions -->
-          <div class="modal-action">
+          <div class="flex gap-3 pt-4 border-t border-base-300">
             <button
               type="button"
-              class="btn btn-ghost"
-              onclick="add_camera_modal.close()"
+              class="btn btn-ghost flex-1"
+              @click="closeAddModal"
             >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                class="h-5 w-5"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M6 18L18 6M6 6l12 12"
+                />
+              </svg>
               ยกเลิก
             </button>
-            <button type="submit" class="btn btn-primary gap-2">
+            <button type="submit" class="btn btn-primary flex-1 gap-2">
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 class="h-5 w-5"
@@ -1386,158 +1555,297 @@ onUnmounted(() => {
 
     <!-- Modal: Edit Camera -->
     <dialog id="edit_camera_modal" class="modal">
-      <div class="modal-box max-w-2xl">
-        <h3 class="font-bold text-2xl mb-4 flex items-center gap-2">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            class="h-6 w-6 text-warning"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-          >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-            />
-          </svg>
-          แก้ไขข้อมูลกล้อง
-        </h3>
+      <div class="modal-box max-w-3xl">
+        <!-- Header -->
+        <div class="flex items-center gap-3 mb-6 pb-4 border-b border-base-300">
+          <div class="p-3 bg-warning/10 rounded-lg">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              class="h-6 w-6 text-warning"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+              />
+            </svg>
+          </div>
+          <div>
+            <h3 class="font-bold text-2xl">แก้ไขข้อมูลกล้อง</h3>
+            <p class="text-sm text-base-content/60">
+              อัปเดตข้อมูลกล้องวงจรปิดในระบบ
+            </p>
+          </div>
+        </div>
 
         <form
           v-if="editingCamera"
           @submit.prevent="handleUpdateCamera"
-          class="space-y-4"
+          class="space-y-6"
         >
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <!-- Camera UID -->
-            <div class="form-control">
-              <label class="label">
-                <span class="label-text font-semibold"
-                  >Camera UID <span class="text-error">*</span></span
-                >
+          <!-- ข้อมูลพื้นฐาน -->
+          <div class="space-y-4">
+            <div class="flex items-center gap-2">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                class="h-5 w-5 text-primary"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                />
+              </svg>
+              <h4 class="font-semibold text-lg">ข้อมูลพื้นฐาน</h4>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <!-- Camera UID -->
+              <label class="form-control w-full">
+                <div class="label">
+                  <span class="label-text font-medium">
+                    Camera UID <span class="text-error">*</span>
+                  </span>
+                </div>
+                <input
+                  v-model="editingCamera.cameraID"
+                  type="text"
+                  placeholder="เช่น CAM-001"
+                  class="input input-bordered w-full"
+                  :class="{ 'input-error': formErrors.cameraID }"
+                  required
+                />
+                <div class="label" v-if="formErrors.cameraID">
+                  <span
+                    class="label-text-alt text-error flex items-center gap-1"
+                  >
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      class="h-3 w-3"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                      />
+                    </svg>
+                    {{ formErrors.cameraID }}
+                  </span>
+                </div>
               </label>
+
+              <!-- Camera Type -->
+              <label class="form-control w-full">
+                <div class="label">
+                  <span class="label-text font-medium">
+                    ประเภทกล้อง <span class="text-error">*</span>
+                  </span>
+                </div>
+                <select
+                  v-model="editingCamera.cameraType"
+                  class="select select-bordered w-full"
+                  :class="{ 'select-error': formErrors.cameraType }"
+                  required
+                >
+                  <option
+                    v-for="type in cameraTypes"
+                    :key="type.value"
+                    :value="type.value"
+                  >
+                    {{ type.icon }} {{ type.label }}
+                  </option>
+                </select>
+                <div class="label" v-if="formErrors.cameraType">
+                  <span
+                    class="label-text-alt text-error flex items-center gap-1"
+                  >
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      class="h-3 w-3"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                      />
+                    </svg>
+                    {{ formErrors.cameraType }}
+                  </span>
+                </div>
+              </label>
+            </div>
+
+            <!-- Camera Name (full width) -->
+            <label class="form-control w-full">
+              <div class="label">
+                <span class="label-text font-medium">
+                  จุดติดตั้ง <span class="text-error">*</span>
+                </span>
+              </div>
               <input
-                v-model="editingCamera.cameraID"
+                v-model="editingCamera.cameraName"
                 type="text"
-                class="input input-bordered"
-                :class="{ 'input-error': formErrors.cameraID }"
+                placeholder="เช่น กล้องหน้าห้องขัง A1"
+                class="input input-bordered w-full"
+                :class="{ 'input-error': formErrors.cameraName }"
                 required
               />
-              <label v-if="formErrors.cameraID" class="label">
-                <span class="label-text-alt text-error">{{
-                  formErrors.cameraID
-                }}</span>
-              </label>
-            </div>
+              <div class="label" v-if="formErrors.cameraName">
+                <span class="label-text-alt text-error flex items-center gap-1">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    class="h-3 w-3"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                    />
+                  </svg>
+                  {{ formErrors.cameraName }}
+                </span>
+              </div>
+            </label>
+          </div>
 
-            <!-- 👇 Camera Type (เพิ่มใหม่) -->
-            <div class="form-control">
-              <label class="label">
-                <span class="label-text font-semibold"
-                  >ประเภทกล้อง <span class="text-error">*</span></span
-                >
-              </label>
-              <select
-                v-model="editingCamera.cameraType"
-                class="select select-bordered"
-                required
+          <div class="divider"></div>
+
+          <!-- พิกัดที่ตั้ง -->
+          <div class="space-y-4">
+            <div class="flex items-center gap-2">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                class="h-5 w-5 text-error"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
               >
-                <option
-                  v-for="type in cameraTypes"
-                  :key="type.value"
-                  :value="type.value"
-                >
-                  {{ type.icon }} {{ type.label }}
-                </option>
-              </select>
-              <label v-if="formErrors.cameraType" class="label">
-                <span class="label-text-alt text-error">{{
-                  formErrors.cameraType
-                }}</span>
-              </label>
-            </div>
-          </div>
-
-          <!-- Camera Name (full width) -->
-          <div class="form-control">
-            <label class="label">
-              <span class="label-text font-semibold"
-                >จุดติดตั้ง <span class="text-error">*</span></span
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
+                />
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
+                />
+              </svg>
+              <h4 class="font-semibold text-lg">พิกัดที่ตั้ง</h4>
+              <span class="text-xs font-normal text-base-content/60"
+                >(ไม่บังคับ)</span
               >
-            </label>
-            <input
-              v-model="editingCamera.cameraName"
-              type="text"
-              class="input input-bordered"
-              :class="{ 'input-error': formErrors.cameraName }"
-              required
-            />
-            <label v-if="formErrors.cameraName" class="label">
-              <span class="label-text-alt text-error">{{
-                formErrors.cameraName
-              }}</span>
-            </label>
-          </div>
-
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <!-- Latitude -->
-            <div class="form-control">
-              <label class="label">
-                <span class="label-text font-semibold">ละติจูด (Latitude)</span>
-              </label>
-              <input
-                v-model="editingCamera.latitude"
-                type="number"
-                step="any"
-                class="input input-bordered"
-                :class="{ 'input-error': formErrors.latitude }"
-              />
-              <label v-if="formErrors.latitude" class="label">
-                <span class="label-text-alt text-error">{{
-                  formErrors.latitude
-                }}</span>
-              </label>
             </div>
 
-            <!-- Longitude -->
-            <div class="form-control">
-              <label class="label">
-                <span class="label-text font-semibold"
-                  >ลองจิจูด (Longitude)</span
-                >
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <!-- Latitude -->
+              <label class="form-control w-full">
+                <div class="label">
+                  <span class="label-text font-medium">ละติจูด (Latitude)</span>
+                </div>
+                <input
+                  v-model="editingCamera.latitude"
+                  type="number"
+                  step="any"
+                  placeholder="7.0067"
+                  class="input input-bordered w-full"
+                  :class="{ 'input-error': formErrors.latitude }"
+                />
+                <div class="label">
+                  <span
+                    class="label-text-alt"
+                    :class="formErrors.latitude ? 'text-error' : ''"
+                  >
+                    {{ formErrors.latitude || "ค่าระหว่าง -90 ถึง 90" }}
+                  </span>
+                </div>
               </label>
-              <input
-                v-model="editingCamera.longitude"
-                type="number"
-                step="any"
-                class="input input-bordered"
-                :class="{ 'input-error': formErrors.longitude }"
-              />
-              <label v-if="formErrors.longitude" class="label">
-                <span class="label-text-alt text-error">{{
-                  formErrors.longitude
-                }}</span>
+
+              <!-- Longitude -->
+              <label class="form-control w-full">
+                <div class="label">
+                  <span class="label-text font-medium"
+                    >ลองจิจูด (Longitude)</span
+                  >
+                </div>
+                <input
+                  v-model="editingCamera.longitude"
+                  type="number"
+                  step="any"
+                  placeholder="100.4925"
+                  class="input input-bordered w-full"
+                  :class="{ 'input-error': formErrors.longitude }"
+                />
+                <div class="label">
+                  <span
+                    class="label-text-alt"
+                    :class="formErrors.longitude ? 'text-error' : ''"
+                  >
+                    {{ formErrors.longitude || "ค่าระหว่าง -180 ถึง 180" }}
+                  </span>
+                </div>
               </label>
             </div>
           </div>
 
-          <!-- Photo URL -->
-          <div class="form-control">
-            <label class="label">
-              <span class="label-text font-semibold">URL ภาพมุมกล้อง</span>
-            </label>
-            <input
-              v-model="editingCamera.photoURL"
-              type="url"
-              class="input input-bordered"
-              :class="{ 'input-error': formErrors.photoURL }"
-            />
-            <label v-if="formErrors.photoURL" class="label">
-              <span class="label-text-alt text-error">{{
-                formErrors.photoURL
-              }}</span>
+          <div class="divider"></div>
+
+          <!-- ภาพมุมกล้อง -->
+          <div class="space-y-4">
+            <div class="flex items-center gap-2">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                class="h-5 w-5 text-info"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+                />
+              </svg>
+              <h4 class="font-semibold text-lg">ภาพมุมกล้อง</h4>
+              <span class="text-xs font-normal text-base-content/60"
+                >(ไม่บังคับ)</span
+              >
+            </div>
+
+            <label class="form-control w-full">
+              <div class="label">
+                <span class="label-text font-medium">URL ภาพมุมกล้อง</span>
+              </div>
+              <input
+                v-model="editingCamera.photoURL"
+                type="url"
+                placeholder="https://example.com/image.jpg"
+                class="input input-bordered w-full"
+                :class="{ 'input-error': formErrors.photoURL }"
+              />
             </label>
           </div>
 
@@ -1565,15 +1873,29 @@ onUnmounted(() => {
           </div>
 
           <!-- Actions -->
-          <div class="modal-action">
+          <div class="flex gap-3 pt-4 border-t border-base-300">
             <button
               type="button"
-              class="btn btn-ghost"
-              onclick="edit_camera_modal.close()"
+              class="btn btn-ghost flex-1"
+              @click="closeEditModal"
             >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                class="h-5 w-5"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M6 18L18 6M6 6l12 12"
+                />
+              </svg>
               ยกเลิก
             </button>
-            <button type="submit" class="btn btn-warning gap-2">
+            <button type="submit" class="btn btn-warning flex-1 gap-2">
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 class="h-5 w-5"
@@ -1592,22 +1914,6 @@ onUnmounted(() => {
             </button>
           </div>
         </form>
-      </div>
-      <form method="dialog" class="modal-backdrop">
-        <button>close</button>
-      </form>
-    </dialog>
-
-    <!-- Modal: Image Preview -->
-    <dialog id="image_preview_modal" class="modal">
-      <div class="modal-box max-w-4xl">
-        <h3 class="font-bold text-lg mb-4">ภาพมุมกล้อง</h3>
-        <figure class="bg-base-200 rounded-lg overflow-hidden">
-          <img :src="previewImage" alt="Camera View" class="w-full" />
-        </figure>
-        <div class="modal-action">
-          <button class="btn" onclick="image_preview_modal.close()">ปิด</button>
-        </div>
       </div>
       <form method="dialog" class="modal-backdrop">
         <button>close</button>

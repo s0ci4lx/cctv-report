@@ -1,5 +1,5 @@
 <script setup>
-import { ref, reactive, onMounted, computed } from "vue";
+import { ref, reactive, onMounted, computed, watch } from "vue";
 import { auth, db } from "../firebase.js";
 import {
   collection,
@@ -310,6 +310,13 @@ const handleEditReport = async (task) => {
   showEditModal.value = true;
 };
 
+// 👇 เพิ่ม watch เพื่อเคลียร์หมายเหตุเมื่อเปลี่ยนเป็น Normal
+watch(() => editFormData.status, (newStatus) => {
+  if (newStatus === 'Normal') {
+    editFormData.notes = '';
+  }
+});
+
 // ฟังก์ชันบันทึกการแก้ไข
 const confirmEditReport = async () => {
   if (!editFormData.status) {
@@ -326,6 +333,8 @@ const confirmEditReport = async () => {
   try {
     const task = editFormData.task;
     const reportRef = doc(db, "reports_log", task.reportData.reportId);
+// 👇 เคลียร์หมายเหตุถ้าสถานะเป็น Normal
+    const notesToSave = editFormData.status === 'Normal' ? '' : editFormData.notes.trim();
 
     await updateDoc(reportRef, {
       status: editFormData.status,
@@ -1035,7 +1044,7 @@ onMounted(() => {
       </div>
     </div>
   </div>
-  <!-- เพิ่ม Modal สำหรับแก้ไข (ก่อน closing </template>) -->
+  <!-- Modal สำหรับแก้ไข -->
   <dialog :open="showEditModal" class="modal">
     <div class="modal-box">
       <h3 class="font-bold text-lg mb-4">แก้ไขรายงานสถานะ</h3>
@@ -1067,9 +1076,10 @@ onMounted(() => {
           </div>
         </div>
 
+        <!-- 👇 แสดงเฉพาะเมื่อสถานะเป็น Issue -->
         <div v-if="editFormData.status === 'Issue'">
           <label class="label">
-            <span class="label-text font-semibold">หมายเหตุ</span>
+            <span class="label-text font-semibold">หมายเหตุ <span class="text-error">*</span></span>
           </label>
           <textarea
             v-model="editFormData.notes"
@@ -1077,6 +1087,14 @@ onMounted(() => {
             placeholder="ระบุปัญหา..."
             rows="3"
           ></textarea>
+        </div>
+
+        <!-- 👇 (ใหม่) แสดงข้อความเมื่อเปลี่ยนเป็น Normal -->
+        <div v-else class="alert alert-info">
+          <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-5 w-5" fill="none" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          <span class="text-sm">หมายเหตุจะถูกล้างเมื่อเปลี่ยนเป็นสถานะปกติ</span>
         </div>
       </div>
 

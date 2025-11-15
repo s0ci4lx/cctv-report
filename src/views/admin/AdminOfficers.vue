@@ -20,8 +20,8 @@ const { showConfirm, showAlert, showToast } = useDialog();
 const officers = ref([]);
 const assignments = ref([]); // เก็บข้อมูล assignments เพื่อนับสถิติ
 const loading = ref(true);
-const searchQuery = ref('');
-const sortBy = ref('name'); // name, email, cameras
+const searchQuery = ref("");
+const sortBy = ref("name"); // name, email, cameras
 
 // State สำหรับ "ฟอร์มเพิ่ม"
 const newOfficer = reactive({
@@ -44,14 +44,15 @@ const totalOfficers = computed(() => officers.value.length);
 // สถิติภาพรวม
 const stats = computed(() => {
   const totalAssignments = assignments.value.length;
-  const avgCamerasPerOfficer = totalOfficers.value > 0 
-    ? (totalAssignments / totalOfficers.value).toFixed(1) 
-    : 0;
-  
+  const avgCamerasPerOfficer =
+    totalOfficers.value > 0
+      ? (totalAssignments / totalOfficers.value).toFixed(1)
+      : 0;
+
   return {
     total: totalOfficers.value,
     totalAssignments,
-    avgCamerasPerOfficer
+    avgCamerasPerOfficer,
   };
 });
 
@@ -71,11 +72,11 @@ const filteredOfficers = computed(() => {
 
   // เรียงลำดับ
   result = [...result].sort((a, b) => {
-    if (sortBy.value === 'name') {
-      return a.name.localeCompare(b.name, 'th');
-    } else if (sortBy.value === 'email') {
+    if (sortBy.value === "name") {
+      return a.name.localeCompare(b.name, "th");
+    } else if (sortBy.value === "email") {
       return a.email.localeCompare(b.email);
-    } else if (sortBy.value === 'cameras') {
+    } else if (sortBy.value === "cameras") {
       return (b.assignmentCount || 0) - (a.assignmentCount || 0);
     }
     return 0;
@@ -98,9 +99,9 @@ const fetchAssignments = async () => {
     assignments.value = fetchedAssignments;
 
     // นับจำนวน assignments ของแต่ละคน
-    officers.value.forEach(officer => {
+    officers.value.forEach((officer) => {
       officer.assignmentCount = assignments.value.filter(
-        a => a.officerEmail === officer.email
+        (a) => a.officerEmail === officer.email
       ).length;
     });
   } catch (e) {
@@ -123,7 +124,7 @@ const fetchOfficers = async () => {
     await fetchAssignments();
   } catch (e) {
     console.error("Error fetching officers: ", e);
-    showAlert("เกิดข้อผิดพลาดในการดึงข้อมูลเจ้าหน้าที่", { type: 'error' }); // 👈 เปลี่ยนจาก alert()
+    showAlert("เกิดข้อผิดพลาดในการดึงข้อมูลเจ้าหน้าที่", { type: "error" }); // 👈 เปลี่ยนจาก alert()
   } finally {
     loading.value = false;
   }
@@ -185,34 +186,36 @@ const handleAddOfficer = async () => {
     showToast("เพิ่มเจ้าหน้าที่สำเร็จ ✅", "success");
   } catch (e) {
     console.error("Error adding document: ", e);
-    showAlert("เกิดข้อผิดพลาดในการเพิ่มข้อมูล", { type: 'error' }); // 👈 เปลี่ยนจาก alert()
+    showAlert("เกิดข้อผิดพลาดในการเพิ่มข้อมูล", { type: "error" }); // 👈 เปลี่ยนจาก alert()
   }
 };
 
 // (D) DELETE: ลบ
 // ✅ แก้ไข handleDeleteOfficer
 const handleDeleteOfficer = async (id, name, email) => {
-  const hasAssignments = assignments.value.some(a => a.officerEmail === email);
-  
+  const hasAssignments = assignments.value.some(
+    (a) => a.officerEmail === email
+  );
+
   if (hasAssignments) {
     const confirmed = await showConfirm({
-      title: 'ยืนยันการลบเจ้าหน้าที่',
+      title: "ยืนยันการลบเจ้าหน้าที่",
       message: `เจ้าหน้าที่ <strong>"${name}"</strong> มีงานที่มอบหมายอยู่<br/><br/>หากลบจะทำให้งานเหล่านั้นไม่มีผู้รับผิดชอบ<br/><br/>คุณแน่ใจหรือไม่ที่จะลบ?`,
-      confirmText: 'ลบ',
-      cancelText: 'ยกเลิก',
-      type: 'error'
+      confirmText: "ลบ",
+      cancelText: "ยกเลิก",
+      type: "error",
     }); // 👈 เปลี่ยนจาก confirm()
-    
+
     if (!confirmed) return;
   } else {
     const confirmed = await showConfirm({
-      title: 'ยืนยันการลบเจ้าหน้าที่',
+      title: "ยืนยันการลบเจ้าหน้าที่",
       message: `คุณแน่ใจหรือไม่ว่าต้องการลบเจ้าหน้าที่<br/><strong>"${name}"</strong>?`,
-      confirmText: 'ลบ',
-      cancelText: 'ยกเลิก',
-      type: 'error'
+      confirmText: "ลบ",
+      cancelText: "ยกเลิก",
+      type: "error",
     }); // 👈 เปลี่ยนจาก confirm()
-    
+
     if (!confirmed) return;
   }
 
@@ -222,7 +225,7 @@ const handleDeleteOfficer = async (id, name, email) => {
     showToast("ลบเจ้าหน้าที่สำเร็จ ✅", "success");
   } catch (e) {
     console.error("Error deleting document: ", e);
-    showAlert("เกิดข้อผิดพลาดในการลบข้อมูล", { type: 'error' }); // 👈 เปลี่ยนจาก alert()
+    showAlert("เกิดข้อผิดพลาดในการลบข้อมูล", { type: "error" }); // 👈 เปลี่ยนจาก alert()
   }
 };
 
@@ -269,7 +272,7 @@ const handleUpdateOfficer = async () => {
     showToast("อัปเดตข้อมูลสำเร็จ ✅", "success");
   } catch (e) {
     console.error("Error updating document: ", e);
-    showAlert("เกิดข้อผิดพลาดในการอัปเดตข้อมูล", { type: 'error' }); // 👈 เปลี่ยนจาก alert()
+    showAlert("เกิดข้อผิดพลาดในการอัปเดตข้อมูล", { type: "error" }); // 👈 เปลี่ยนจาก alert()
   }
 };
 
@@ -286,13 +289,13 @@ const getInitial = (name) => {
 // สร้างสีแบบสุ่มตาม email
 const getAvatarColor = (email) => {
   const colors = [
-    'bg-primary',
-    'bg-secondary',
-    'bg-accent',
-    'bg-info',
-    'bg-success',
-    'bg-warning',
-    'bg-error',
+    "bg-primary",
+    "bg-secondary",
+    "bg-accent",
+    "bg-info",
+    "bg-success",
+    "bg-warning",
+    "bg-error",
   ];
   const index = email.charCodeAt(0) % colors.length;
   return colors[index];
@@ -307,9 +310,13 @@ onMounted(() => {
 <template>
   <div class="py-6">
     <!-- Header Section -->
-    <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
+    <div
+      class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4"
+    >
       <div>
-        <h2 class="text-3xl font-bold text-base-content mb-2">จัดการรายชื่อเจ้าหน้าที่</h2>
+        <h2 class="text-3xl font-bold text-base-content mb-2">
+          จัดการรายชื่อเจ้าหน้าที่
+        </h2>
         <p class="text-base-content/70">
           รายชื่อเจ้าหน้าที่ทั้งหมด ({{ totalOfficers }} รายการ)
         </p>
@@ -358,8 +365,18 @@ onMounted(() => {
       <div class="stats shadow bg-base-100">
         <div class="stat">
           <div class="stat-figure text-primary">
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="inline-block w-8 h-8 stroke-current">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              class="inline-block w-8 h-8 stroke-current"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
+              />
             </svg>
           </div>
           <div class="stat-title">จำนวนเจ้าหน้าที่</div>
@@ -371,12 +388,24 @@ onMounted(() => {
       <div class="stats shadow bg-base-100">
         <div class="stat">
           <div class="stat-figure text-secondary">
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="inline-block w-8 h-8 stroke-current">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              class="inline-block w-8 h-8 stroke-current"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"
+              />
             </svg>
           </div>
           <div class="stat-title">กล้องทั้งหมด</div>
-          <div class="stat-value text-secondary">{{ stats.totalAssignments }}</div>
+          <div class="stat-value text-secondary">
+            {{ stats.totalAssignments }}
+          </div>
           <div class="stat-desc">จุดที่มอบหมาย</div>
         </div>
       </div>
@@ -384,12 +413,24 @@ onMounted(() => {
       <div class="stats shadow bg-base-100">
         <div class="stat">
           <div class="stat-figure text-accent">
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="inline-block w-8 h-8 stroke-current">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              class="inline-block w-8 h-8 stroke-current"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
+              />
             </svg>
           </div>
           <div class="stat-title">เฉลี่ยต่อคน</div>
-          <div class="stat-value text-accent">{{ stats.avgCamerasPerOfficer }}</div>
+          <div class="stat-value text-accent">
+            {{ stats.avgCamerasPerOfficer }}
+          </div>
           <div class="stat-desc">กล้อง/คน</div>
         </div>
       </div>
@@ -434,7 +475,10 @@ onMounted(() => {
     </div>
 
     <!-- Officers Grid -->
-    <div v-else-if="filteredOfficers.length > 0" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    <div
+      v-else-if="filteredOfficers.length > 0"
+      class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+    >
       <div
         v-for="item in filteredOfficers"
         :key="item.id"
@@ -444,20 +488,39 @@ onMounted(() => {
           <!-- Avatar & Info -->
           <div class="flex items-start gap-4 mb-4">
             <div class="avatar placeholder">
-              <div :class="`${getAvatarColor(item.email)} text-neutral-content rounded-full w-16 h-16`">
-                <span class="text-2xl font-bold">{{ getInitial(item.name) }}</span>
+              <div
+                :class="`${getAvatarColor(
+                  item.email
+                )} text-neutral-content rounded-full w-16 h-16`"
+              >
+                <span class="text-2xl font-bold">{{
+                  getInitial(item.name)
+                }}</span>
               </div>
             </div>
 
             <div class="flex-1 min-w-0">
               <h3 class="font-bold text-lg truncate">{{ item.name }}</h3>
-              <p class="text-sm text-base-content/70 truncate">{{ item.email }}</p>
-              
+              <p class="text-sm text-base-content/70 truncate">
+                {{ item.email }}
+              </p>
+
               <!-- Stats Badge -->
               <div class="mt-2">
                 <div class="badge badge-outline gap-2">
-                  <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    class="h-4 w-4"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"
+                    />
                   </svg>
                   {{ item.assignmentCount || 0 }} กล้อง
                 </div>
@@ -474,8 +537,19 @@ onMounted(() => {
               @click="openEditModal(item)"
               class="btn btn-sm btn-warning gap-2"
             >
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                class="h-4 w-4"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                />
               </svg>
               แก้ไข
             </button>
@@ -483,8 +557,19 @@ onMounted(() => {
               @click="handleDeleteOfficer(item.id, item.name, item.email)"
               class="btn btn-sm btn-error gap-2"
             >
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                class="h-4 w-4"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                />
               </svg>
               ลบ
             </button>
@@ -495,12 +580,27 @@ onMounted(() => {
 
     <!-- Empty State -->
     <div v-else class="text-center py-20">
-      <svg xmlns="http://www.w3.org/2000/svg" class="h-24 w-24 mx-auto text-base-content/30 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        class="h-24 w-24 mx-auto text-base-content/30 mb-4"
+        fill="none"
+        viewBox="0 0 24 24"
+        stroke="currentColor"
+      >
+        <path
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="2"
+          d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
+        />
       </svg>
       <h3 class="text-xl font-bold mb-2">ไม่พบข้อมูลเจ้าหน้าที่</h3>
       <p class="text-base-content/70 mb-4">
-        {{ searchQuery ? 'ไม่พบผลลัพธ์ที่ตรงกับคำค้นหา' : 'ยังไม่มีเจ้าหน้าที่ในระบบ' }}
+        {{
+          searchQuery
+            ? "ไม่พบผลลัพธ์ที่ตรงกับคำค้นหา"
+            : "ยังไม่มีเจ้าหน้าที่ในระบบ"
+        }}
       </p>
       <button v-if="!searchQuery" @click="openAddModal" class="btn btn-primary">
         เพิ่มเจ้าหน้าที่คนแรก
@@ -509,68 +609,189 @@ onMounted(() => {
 
     <!-- Modal: Add Officer -->
     <dialog id="add_officer_modal" class="modal">
-      <div class="modal-box max-w-md">
-        <h3 class="font-bold text-2xl mb-4 flex items-center gap-2">
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
-          </svg>
-          เพิ่มเจ้าหน้าที่ใหม่
-        </h3>
-
-        <form @submit.prevent="handleAddOfficer" class="space-y-4">
-          <!-- Name Field -->
-          <div class="form-control">
-            <label class="label">
-              <span class="label-text font-semibold">ชื่อ-สกุล <span class="text-error">*</span></span>
-            </label>
-            <input
-              v-model="newOfficer.name"
-              type="text"
-              placeholder="เช่น จ.ส.ต. สมชาย ใจดี"
-              class="input input-bordered w-full"
-              :class="{ 'input-error': formErrors.name }"
-            />
-            <label v-if="formErrors.name" class="label">
-              <span class="label-text-alt text-error">{{ formErrors.name }}</span>
-            </label>
+      <div class="modal-box max-w-2xl">
+        <!-- Header -->
+        <div class="flex items-center gap-3 mb-6 pb-4 border-b border-base-300">
+          <div class="p-3 bg-primary/10 rounded-lg">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              class="h-6 w-6 text-primary"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"
+              />
+            </svg>
           </div>
+          <div>
+            <h3 class="font-bold text-2xl">เพิ่มเจ้าหน้าที่ใหม่</h3>
+            <p class="text-sm text-base-content/60">
+              เพิ่มเจ้าหน้าที่เข้าสู่ระบบ
+            </p>
+          </div>
+        </div>
 
-          <!-- Email Field -->
-          <div class="form-control">
-            <label class="label">
-              <span class="label-text font-semibold">อีเมล <span class="text-error">*</span></span>
+        <form @submit.prevent="handleAddOfficer" class="space-y-6">
+          <!-- ข้อมูลเจ้าหน้าที่ -->
+          <div class="space-y-4">
+            <div class="flex items-center gap-2">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                class="h-5 w-5 text-primary"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                />
+              </svg>
+              <h4 class="font-semibold text-lg">ข้อมูลเจ้าหน้าที่</h4>
+            </div>
+
+            <!-- Name Field -->
+            <label class="form-control w-full">
+              <div class="label">
+                <span class="label-text font-medium">
+                  ชื่อ-สกุล <span class="text-error">*</span>
+                </span>
+              </div>
+              <input
+                v-model="newOfficer.name"
+                type="text"
+                placeholder="เช่น จ.ส.ต. สมชาย ใจดี"
+                class="input input-bordered w-full"
+                :class="{ 'input-error': formErrors.name }"
+                required
+              />
+              <div class="label" v-if="formErrors.name">
+                <span class="label-text-alt text-error flex items-center gap-1">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    class="h-3 w-3"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                    />
+                  </svg>
+                  {{ formErrors.name }}
+                </span>
+              </div>
             </label>
-            <input
-              v-model="newOfficer.email"
-              type="email"
-              placeholder="example@police.go.th"
-              class="input input-bordered w-full"
-              :class="{ 'input-error': formErrors.email }"
-            />
-            <label v-if="formErrors.email" class="label">
-              <span class="label-text-alt text-error">{{ formErrors.email }}</span>
-            </label>
-            <label v-else class="label">
-              <span class="label-text-alt">ใช้สำหรับเข้าสู่ระบบด้วย Google</span>
+
+            <!-- Email Field -->
+            <label class="form-control w-full">
+              <div class="label">
+                <span class="label-text font-medium">
+                  อีเมล <span class="text-error">*</span>
+                </span>
+              </div>
+              <input
+                v-model="newOfficer.email"
+                type="email"
+                placeholder="example@police.go.th"
+                class="input input-bordered w-full"
+                :class="{ 'input-error': formErrors.email }"
+                required
+              />
+              <div class="label" v-if="formErrors.email">
+                <span class="label-text-alt text-error flex items-center gap-1">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    class="h-3 w-3"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                    />
+                  </svg>
+                  {{ formErrors.email }}
+                </span>
+              </div>
+              <div class="label" v-else>
+                <span class="label-text-alt"
+                  >ใช้สำหรับเข้าสู่ระบบด้วย Google</span
+                >
+              </div>
             </label>
           </div>
 
           <!-- Info Alert -->
-          <div class="alert alert-info shadow-sm">
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="stroke-current shrink-0 w-6 h-6">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+          <div class="alert alert-info">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              class="stroke-current shrink-0 w-6 h-6"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+              />
             </svg>
-            <span class="text-sm">อีเมลต้องตรงกับ Google Account ที่ใช้ล็อกอิน</span>
+            <span class="text-sm"
+              >อีเมลต้องตรงกับ Google Account ที่ใช้ล็อกอิน</span
+            >
           </div>
 
-          <!-- Action Buttons -->
-          <div class="modal-action">
-            <button type="button" class="btn btn-ghost" onclick="add_officer_modal.close()">
+          <!-- Actions -->
+          <div class="flex gap-3 pt-4 border-t border-base-300">
+            <button
+              type="button"
+              class="btn btn-ghost flex-1"
+              onclick="add_officer_modal.close()"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                class="h-5 w-5"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M6 18L18 6M6 6l12 12"
+                />
+              </svg>
               ยกเลิก
             </button>
-            <button type="submit" class="btn btn-primary gap-2">
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+            <button type="submit" class="btn btn-primary flex-1 gap-2">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                class="h-5 w-5"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M5 13l4 4L19 7"
+                />
               </svg>
               เพิ่มเจ้าหน้าที่
             </button>
@@ -584,67 +805,192 @@ onMounted(() => {
 
     <!-- Modal: Edit Officer -->
     <dialog id="edit_officer_modal" class="modal">
-      <div class="modal-box max-w-md">
-        <h3 class="font-bold text-2xl mb-4 flex items-center gap-2">
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-warning" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-          </svg>
-          แก้ไขข้อมูลเจ้าหน้าที่
-        </h3>
+      <div class="modal-box max-w-2xl">
+        <!-- Header -->
+        <div class="flex items-center gap-3 mb-6 pb-4 border-b border-base-300">
+          <div class="p-3 bg-warning/10 rounded-lg">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              class="h-6 w-6 text-warning"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+              />
+            </svg>
+          </div>
+          <div>
+            <h3 class="font-bold text-2xl">แก้ไขข้อมูลเจ้าหน้าที่</h3>
+            <p class="text-sm text-base-content/60">
+              อัปเดตข้อมูลเจ้าหน้าที่ในระบบ
+            </p>
+          </div>
+        </div>
 
         <form
           v-if="editingOfficer"
           @submit.prevent="handleUpdateOfficer"
-          class="space-y-4"
+          class="space-y-6"
         >
-          <!-- Name Field -->
-          <div class="form-control">
-            <label class="label">
-              <span class="label-text font-semibold">ชื่อ-สกุล <span class="text-error">*</span></span>
-            </label>
-            <input
-              v-model="editingOfficer.name"
-              type="text"
-              class="input input-bordered w-full"
-              :class="{ 'input-error': formErrors.name }"
-            />
-            <label v-if="formErrors.name" class="label">
-              <span class="label-text-alt text-error">{{ formErrors.name }}</span>
-            </label>
-          </div>
+          <!-- ข้อมูลเจ้าหน้าที่ -->
+          <div class="space-y-4">
+            <div class="flex items-center gap-2">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                class="h-5 w-5 text-primary"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                />
+              </svg>
+              <h4 class="font-semibold text-lg">ข้อมูลเจ้าหน้าที่</h4>
+            </div>
 
-          <!-- Email Field -->
-          <div class="form-control">
-            <label class="label">
-              <span class="label-text font-semibold">อีเมล <span class="text-error">*</span></span>
+            <!-- Name Field -->
+            <label class="form-control w-full">
+              <div class="label">
+                <span class="label-text font-medium">
+                  ชื่อ-สกุล <span class="text-error">*</span>
+                </span>
+              </div>
+              <input
+                v-model="editingOfficer.name"
+                type="text"
+                placeholder="เช่น จ.ส.ต. สมชาย ใจดี"
+                class="input input-bordered w-full"
+                :class="{ 'input-error': formErrors.name }"
+                required
+              />
+              <div class="label" v-if="formErrors.name">
+                <span class="label-text-alt text-error flex items-center gap-1">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    class="h-3 w-3"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                    />
+                  </svg>
+                  {{ formErrors.name }}
+                </span>
+              </div>
             </label>
-            <input
-              v-model="editingOfficer.email"
-              type="email"
-              class="input input-bordered w-full"
-              :class="{ 'input-error': formErrors.email }"
-            />
-            <label v-if="formErrors.email" class="label">
-              <span class="label-text-alt text-error">{{ formErrors.email }}</span>
+
+            <!-- Email Field -->
+            <label class="form-control w-full">
+              <div class="label">
+                <span class="label-text font-medium">
+                  อีเมล <span class="text-error">*</span>
+                </span>
+              </div>
+              <input
+                v-model="editingOfficer.email"
+                type="email"
+                placeholder="example@police.go.th"
+                class="input input-bordered w-full"
+                :class="{ 'input-error': formErrors.email }"
+                required
+              />
+              <div class="label" v-if="formErrors.email">
+                <span class="label-text-alt text-error flex items-center gap-1">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    class="h-3 w-3"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                    />
+                  </svg>
+                  {{ formErrors.email }}
+                </span>
+              </div>
             </label>
           </div>
 
           <!-- Warning Alert (if has assignments) -->
-          <div v-if="editingOfficer.assignmentCount > 0" class="alert alert-warning shadow-sm">
-            <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+          <div
+            v-if="editingOfficer.assignmentCount > 0"
+            class="alert alert-warning"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              class="stroke-current shrink-0 h-6 w-6"
+              fill="none"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+              />
             </svg>
-            <span class="text-sm">เจ้าหน้าที่คนนี้มี {{ editingOfficer.assignmentCount }} กล้องที่ดูแลอยู่</span>
+            <span class="text-sm">
+              เจ้าหน้าที่คนนี้มี
+              {{ editingOfficer.assignmentCount }} กล้องที่ดูแลอยู่
+            </span>
           </div>
 
-          <!-- Action Buttons -->
-          <div class="modal-action">
-            <button type="button" class="btn btn-ghost" onclick="edit_officer_modal.close()">
+          <!-- Actions -->
+          <div class="flex gap-3 pt-4 border-t border-base-300">
+            <button
+              type="button"
+              class="btn btn-ghost flex-1"
+              onclick="edit_officer_modal.close()"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                class="h-5 w-5"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M6 18L18 6M6 6l12 12"
+                />
+              </svg>
               ยกเลิก
             </button>
-            <button type="submit" class="btn btn-warning gap-2">
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+            <button type="submit" class="btn btn-warning flex-1 gap-2">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                class="h-5 w-5"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M5 13l4 4L19 7"
+                />
               </svg>
               บันทึกการเปลี่ยนแปลง
             </button>
@@ -652,7 +998,7 @@ onMounted(() => {
         </form>
       </div>
       <form method="dialog" class="modal-backdrop">
-        <button>ปิด</button>
+        <button>close</button>
       </form>
     </dialog>
   </div>

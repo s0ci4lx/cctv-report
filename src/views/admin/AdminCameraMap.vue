@@ -666,8 +666,8 @@ onBeforeUnmount(() => {
       </div>
       <!-- Mobile Buttons -->
       <div class="flex justify-end gap-2 mb-2 md:hidden">
-        <div class="ms-2 me-auto">
-          <h2 class="text-2xl font-bold text-base-content mb-2">
+        <div class="ms-2 me-auto mt-2">
+          <h2 class=" text-2xl font-bold text-base-content">
             แผนที่จุดติดตั้งกล้อง
           </h2>
         </div>

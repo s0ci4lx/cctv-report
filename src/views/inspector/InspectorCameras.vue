@@ -315,19 +315,19 @@ onUnmounted(() => {
               v-model="searchQuery"
               type="text"
               placeholder="ค้นหา UID หรือจุดติดตั้ง..."
-              class="input input-bordered flex-1"
+              class="input input-bordered flex-1 w-full"
             />
           </div>
 
           <div class="form-control">
-            <select v-model="sortBy" class="select select-bordered">
+            <select v-model="sortBy" class="select select-bordered w-full">
               <option value="cameraID">เรียงตาม: Camera UID</option>
               <option value="cameraName">เรียงตาม: จุดติดตั้ง</option>
               <option value="status">เรียงตาม: สถานะ</option>
             </select>
           </div>
 
-          <div v-if="isLargeScreen" class="form-control">
+          <div v-if="isLargeScreen" class="form-control my-auto">
             <div class="join">
               <button 
                 class="join-item btn btn-sm gap-2" 

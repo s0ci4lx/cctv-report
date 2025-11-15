@@ -305,20 +305,11 @@ onMounted(async () => {
         <div class="stats shadow bg-base-100">
           <div class="stat">
             <div class="stat-figure text-info">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                class="h-8 w-8"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M9 12l2 2 4-4m5.25-2.25l-7.5 7.5L4.5 12"
-                />
-              </svg>
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" 
+       stroke-width="1.5" stroke="currentColor" class="w-8 h-8">
+    <path stroke-linecap="round" stroke-linejoin="round" 
+          d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z" />
+  </svg>
             </div>
             <div class="stat-title">Admin</div>
             <div class="stat-value text-info">{{ admins.length }}</div>
@@ -329,20 +320,11 @@ onMounted(async () => {
         <div class="stats shadow bg-base-100">
           <div class="stat">
             <div class="stat-figure text-secondary">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                class="h-8 w-8"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-                />
-              </svg>
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" 
+       stroke-width="1.5" stroke="currentColor" class="w-8 h-8">
+    <path stroke-linecap="round" stroke-linejoin="round" 
+          d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
+  </svg>
             </div>
             <div class="stat-title">Inspector</div>
             <div class="stat-value text-secondary">{{ inspectors.length }}</div>
@@ -398,7 +380,7 @@ onMounted(async () => {
               เพิ่ม Inspector
             </h3>
 
-            <div class="space-y-2">
+            <div class="space-y-4">
               <div class="form-control w-full">
                 <label class="label">
                   <span class="label-text font-semibold">Email</span>
@@ -497,7 +479,7 @@ onMounted(async () => {
               เพิ่ม Admin
             </h3>
 
-            <div class="space-y-2">
+            <div class="space-y-4">
               <div class="form-control w-full">
                 <label class="label">
                   <span class="label-text font-semibold">Email</span>
