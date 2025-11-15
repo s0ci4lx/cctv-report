@@ -582,7 +582,7 @@ onBeforeUnmount(() => {
       </div>
       <!-- Header -->
       <div
-        class="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 gap-4"
+        class="flex flex-col hidden md:flex md:flex-row justify-between items-start md:items-center mb-4 gap-4"
       >
         <div>
           <h2 class="text-3xl font-bold text-base-content mb-2">
@@ -593,7 +593,7 @@ onBeforeUnmount(() => {
           </p>
         </div>
 
-        <div class="flex gap-2 hidden md:flex">
+        <div class="flex gap-2 ">
           <button
             @click="handleRefresh"
             class="btn btn-ghost gap-2"
@@ -640,7 +640,13 @@ onBeforeUnmount(() => {
         </div>
       </div>
       <!-- Mobile Buttons -->
-      <div class="flex gap-2 mb-2 md:hidden">
+      <div class="flex justify-end gap-2 mb-2 md:hidden">
+        <div class="ms-2 me-auto">
+          <h2 class="text-2xl font-bold text-base-content mb-2">
+            แผนที่จุดติดตั้งกล้อง
+          </h2>
+          
+        </div>
         <button
           @click="handleRefresh"
           class="btn btn-ghost gap-2"

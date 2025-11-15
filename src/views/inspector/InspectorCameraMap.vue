@@ -162,6 +162,13 @@ const destroyMap = () => {
   }
 };
 
+// 👇 ✅ เพิ่มฟังก์ชัน refresh clusters (แก้ไข Error)
+const forceRefreshMarkers = () => {
+  if (markerClusterGroup.value) {
+    markerClusterGroup.value.refreshClusters();
+  }
+};
+
 const initMap = () => {
   destroyMap();
 
@@ -211,7 +218,7 @@ const initMap = () => {
 
     map.value.addLayer(markerClusterGroup.value);
 
-    // 👇 วางตรงนี้ - Refresh markers on zoom end
+    // 👇 Refresh markers on zoom end
     map.value.on('zoomend', () => {
       forceRefreshMarkers();
     });
@@ -354,11 +361,7 @@ const fetchData = async () => {
     loading.value = false;
   }
 };
-const forceRefreshMarkers = () => {
-  if (markerClusterGroup.value) {
-    markerClusterGroup.value.refreshClusters();
-  }
-};
+
 const handleRefresh = async () => {
   await fetchData();
   initMap();
@@ -468,7 +471,7 @@ onBeforeUnmount(() => {
           </div>
         </div>
 
-        <!-- 👇 Card 4: 4G Cameras (ใหม่) -->
+        <!-- 👇 Card 4: 4G Cameras -->
         <div class="stats shadow bg-base-100">
           <div class="stat">
             <div class="stat-figure text-primary">
@@ -488,7 +491,7 @@ onBeforeUnmount(() => {
           </div>
         </div>
 
-        <!-- 👇 Card 5: WIFI Cameras (ใหม่) -->
+        <!-- 👇 Card 5: WIFI Cameras -->
         <div class="stats shadow bg-base-100">
           <div class="stat">
             <div class="stat-figure text-info">
@@ -508,7 +511,7 @@ onBeforeUnmount(() => {
           </div>
         </div>
 
-        <!-- 👇 Card 6: Tactical Cameras (ใหม่) -->
+        <!-- 👇 Card 6: Tactical Cameras -->
         <div class="stats shadow bg-base-100">
           <div class="stat">
             <div class="stat-figure text-warning">
@@ -579,7 +582,7 @@ onBeforeUnmount(() => {
       </div>
       <!-- Header -->
       <div
-        class="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 gap-4"
+        class="flex flex-col hidden md:flex md:flex-row justify-between items-start md:items-center mb-4 gap-4"
       >
         <div>
           <h2 class="text-3xl font-bold text-base-content mb-2">
@@ -590,7 +593,7 @@ onBeforeUnmount(() => {
           </p>
         </div>
 
-        <div class="flex gap-2 hidden md:flex">
+        <div class="flex gap-2 ">
           <button
             @click="handleRefresh"
             class="btn btn-ghost gap-2"
@@ -637,7 +640,13 @@ onBeforeUnmount(() => {
         </div>
       </div>
       <!-- Mobile Buttons -->
-      <div class="flex gap-2 mb-2 md:hidden">
+      <div class="flex justify-end gap-2 mb-2 md:hidden">
+        <div class="ms-2 me-auto">
+          <h2 class="text-2xl font-bold text-base-content mb-2">
+            แผนที่จุดติดตั้งกล้อง
+          </h2>
+          
+        </div>
         <button
           @click="handleRefresh"
           class="btn btn-ghost gap-2"
@@ -676,7 +685,7 @@ onBeforeUnmount(() => {
             <path
               stroke-linecap="round"
               stroke-linejoin="round"
-              d="M9 6.75V15m6-6v8.25m.503 3.498l4.875-2.437c.381-.19.622-.58.622-1.006V4.82c0-.836-.88-1.38-1.628-1.006l-3.869 1.934c-.317.159-.69.159-1.006 0L9.503 3.252a1.125 1.125 0 00-1.006 0L3.622 5.689C3.24 5.88 3 6.27 3 6.695V19.18c0 .836.88 1.38 1.628 1.006l3.869-1.934c.317-.159.69-.159 1.006 0l4.994 2.497c.317.158.69.158 1.006 0z"
+              d="M9 6.75V15m6-6v8.25m.503 3.498l4.875-2.437c.381-.19.622-.58.622-1.006V4.82c0-.836-.88-1.38-1.628-1.006l-3.869 1.934c-.317.159-.69.159-1.006 0L9.503 3.252a1.125 1.125 0 00-1.006 0L3.622 5.689C3.24 5.88 3 6.27 3 6.695V19.18c0 .836.88 1.38 1.628 1.006l3.869-1.934c.317-.159.69.159 1.006 0l4.994 2.497c.317.158.69.158 1.006 0z"
             />
           </svg>
           ดูทั้งหมด
