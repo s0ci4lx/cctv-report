@@ -164,8 +164,16 @@ const destroyMap = () => {
 
 // 👇 ✅ เพิ่มฟังก์ชัน refresh clusters (แก้ไข Error)
 const forceRefreshMarkers = () => {
-  if (markerClusterGroup.value) {
+  if (markerClusterGroup.value && map.value) {
+    // ✅ เพิ่มการตรวจสอบ null
     markerClusterGroup.value.refreshClusters();
+
+    // ✅ บังคับให้แผนที่รีเฟรช
+    setTimeout(() => {
+      if (map.value) {
+        map.value.invalidateSize();
+      }
+    }, 50);
   }
 };
 
@@ -182,7 +190,7 @@ const initMap = () => {
     // สร้างแผนที่พร้อมปิด marker animation
     map.value = L.map("map", {
       zoomAnimation: true,
-      markerZoomAnimation: false
+      markerZoomAnimation: false,
     }).setView(defaultCenter, defaultZoom);
 
     L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
@@ -197,36 +205,49 @@ const initMap = () => {
       showCoverageOnHover: false,
       zoomToBoundsOnClick: true,
       maxClusterRadius: 60,
-      iconCreateFunction: function(cluster) {
+      disableClusteringAtZoom: 18, // ✅ ปิด clustering เมื่อซูมระดับ 18
+      animate: true,
+      animateAddingMarkers: false, // ✅ ไม่ใช้ animation ตอนเพิ่มหมุด
+      removeOutsideVisibleBounds: true, // ✅ ลบหมุดนอกหน้าจอ
+      iconCreateFunction: function (cluster) {
         const childCount = cluster.getChildCount();
-        let c = ' marker-cluster-';
+        let c = " marker-cluster-";
         if (childCount < 10) {
-          c += 'small';
+          c += "small";
         } else if (childCount < 100) {
-          c += 'medium';
+          c += "medium";
         } else {
-          c += 'large';
+          c += "large";
         }
-        
+
         return new L.DivIcon({
-          html: '<div><span>' + childCount + '</span></div>',
-          className: 'marker-cluster' + c,
-          iconSize: new L.Point(40, 40)
+          html: "<div><span>" + childCount + "</span></div>",
+          className: "marker-cluster" + c,
+          iconSize: new L.Point(40, 40),
         });
-      }
+      },
     });
 
     map.value.addLayer(markerClusterGroup.value);
 
     // 👇 Refresh markers on zoom end
-    map.value.on('zoomend', () => {
-      forceRefreshMarkers();
+    map.value.on("zoomend moveend", () => {
+      setTimeout(() => {
+        if (map.value) {
+          map.value.invalidateSize(); // ✅ บังคับให้แผนที่รีเฟรชขนาด
+        }
+        forceRefreshMarkers();
+      }, 100);
     });
 
     updateMarkers();
 
+    // ✅ แทนที่ด้วยโค้ดใหม่นี้
     setTimeout(() => {
-      fitBounds();
+      if (map.value) {
+        map.value.invalidateSize(); // แก้ปัญหาแผนที่แสดงไม่ถูกต้อง
+        fitBounds();
+      }
     }, 300);
   }, 100);
 };
@@ -307,6 +328,10 @@ const updateMarkers = () => {
     marker.bindPopup(popupContent, { maxWidth: 300 });
     markerClusterGroup.value.addLayer(marker);
   });
+  // ✅ เพิ่มการ refresh หลังเพิ่มหมุดเสร็จ
+  setTimeout(() => {
+    forceRefreshMarkers();
+  }, 100);
 };
 
 const fitBounds = () => {
@@ -593,7 +618,7 @@ onBeforeUnmount(() => {
           </p>
         </div>
 
-        <div class="flex gap-2 ">
+        <div class="flex gap-2">
           <button
             @click="handleRefresh"
             class="btn btn-ghost gap-2"
@@ -645,7 +670,6 @@ onBeforeUnmount(() => {
           <h2 class="text-2xl font-bold text-base-content mb-2">
             แผนที่จุดติดตั้งกล้อง
           </h2>
-          
         </div>
         <button
           @click="handleRefresh"
