@@ -24,7 +24,8 @@ const searchQuery = ref("");
 const sortBy = ref("cameraID");
 const viewMode = ref("cards");
 const isLargeScreen = ref(true);
-
+// 👇 เพิ่ม state สำหรับกรองประเภท
+const filterCameraType = ref("all");
 // 👇 เพิ่มตัวเลือกประเภทกล้อง
 const cameraTypes = [
   { value: "4G", label: "4G", icon: "📡", color: "badge-primary" },
@@ -72,9 +73,19 @@ const effectiveViewMode = computed(() => {
   return isLargeScreen.value ? viewMode.value : "cards";
 });
 
+// 👇 แก้ไข filteredCameras เพื่อรองรับการกรองตามประเภท
 const filteredCameras = computed(() => {
   let result = cameras.value;
 
+  // กรองตามประเภทกล้อง
+  if (filterCameraType.value !== "all") {
+    result = result.filter((c) => {
+      const cameraType = c.cameraType || "4G";
+      return cameraType === filterCameraType.value;
+    });
+  }
+
+  // กรองตามคำค้นหา
   if (searchQuery.value) {
     const query = searchQuery.value.toLowerCase();
     result = result.filter(
@@ -84,6 +95,7 @@ const filteredCameras = computed(() => {
     );
   }
 
+  // เรียงลำดับ
   result = [...result].sort((a, b) => {
     if (sortBy.value === "cameraID") {
       return a.cameraID.localeCompare(b.cameraID);
@@ -99,6 +111,11 @@ const filteredCameras = computed(() => {
 
   return result;
 });
+
+// 👇 เพิ่มฟังก์ชันสำหรับคลิก Card
+const filterByType = (type) => {
+  filterCameraType.value = type;
+};
 // นับจำนวนกล้องแต่ละประเภท
 const camera4GCount = computed(
   () => cameras.value.filter((c) => (c.cameraType || "4G") === "4G").length
@@ -471,8 +488,12 @@ onUnmounted(() => {
 
     <!-- Statistics -->
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
-      <!-- Card 1: Total -->
-      <div class="stats shadow bg-base-100">
+      <!-- Card 1: Total - คลิกแสดงทั้งหมด -->
+      <button
+        @click="filterByType('all')"
+        class="stats shadow bg-base-100 hover:shadow-xl transition-all cursor-pointer text-left"
+        :class="{ 'ring-2 ring-primary': filterCameraType === 'all' }"
+      >
         <div class="stat">
           <div class="stat-figure text-primary">
             <svg
@@ -493,7 +514,7 @@ onUnmounted(() => {
           <div class="stat-value text-primary">{{ totalCameras }}</div>
           <div class="stat-desc">จำนวนกล้องในระบบ</div>
         </div>
-      </div>
+      </button>
 
       <!-- Card 2: Assigned -->
       <div class="stats shadow bg-base-100">
@@ -549,8 +570,12 @@ onUnmounted(() => {
         </div>
       </div>
 
-      <!-- 👇 Card 4: 4G Cameras (ใหม่) -->
-      <div class="stats shadow bg-base-100">
+      <!-- 👇 Card 4: 4G Cameras - คลิกกรอง 4G -->
+      <button
+        @click="filterByType('4G')"
+        class="stats shadow bg-base-100 hover:shadow-xl transition-all cursor-pointer text-left"
+        :class="{ 'ring-2 ring-primary': filterCameraType === '4G' }"
+      >
         <div class="stat">
           <div class="stat-figure text-primary">
             <div class="text-4xl">📡</div>
@@ -565,10 +590,14 @@ onUnmounted(() => {
             }}% ของทั้งหมด
           </div>
         </div>
-      </div>
+      </button>
 
-      <!-- 👇 Card 5: WIFI Cameras (ใหม่) -->
-      <div class="stats shadow bg-base-100">
+      <!-- 👇 Card 5: WIFI Cameras - คลิกกรอง WIFI -->
+      <button
+        @click="filterByType('WIFI')"
+        class="stats shadow bg-base-100 hover:shadow-xl transition-all cursor-pointer text-left"
+        :class="{ 'ring-2 ring-info': filterCameraType === 'WIFI' }"
+      >
         <div class="stat">
           <div class="stat-figure text-info">
             <div class="text-4xl">📶</div>
@@ -583,10 +612,14 @@ onUnmounted(() => {
             }}% ของทั้งหมด
           </div>
         </div>
-      </div>
+      </button>
 
-      <!-- 👇 Card 6: Tactical Cameras (ใหม่) -->
-      <div class="stats shadow bg-base-100">
+      <!-- 👇 Card 6: Tactical Cameras - คลิกกรอง Tactical -->
+      <button
+        @click="filterByType('Tactical')"
+        class="stats shadow bg-base-100 hover:shadow-xl transition-all cursor-pointer text-left"
+        :class="{ 'ring-2 ring-warning': filterCameraType === 'Tactical' }"
+      >
         <div class="stat">
           <div class="stat-figure text-warning">
             <div class="text-4xl">🎯</div>
@@ -601,10 +634,10 @@ onUnmounted(() => {
             }}% ของทั้งหมด
           </div>
         </div>
-      </div>
+      </button>
     </div>
 
-    <!-- Search & Sort Bar -->
+    <!-- Search & Sort Bar - 👇 เพิ่ม Dropdown กรอง -->
     <div class="card bg-base-100 shadow-md mb-6">
       <div class="card-body p-4">
         <div class="flex flex-col md:flex-row gap-4">
@@ -615,6 +648,16 @@ onUnmounted(() => {
               placeholder="ค้นหา UID หรือจุดติดตั้ง..."
               class="input input-bordered flex-1 w-full"
             />
+          </div>
+
+          <!-- 👇 เพิ่ม Dropdown กรองประเภท -->
+          <div class="form-control">
+            <select v-model="filterCameraType" class="select select-bordered w-full">
+              <option value="all">ทุกประเภท ({{ totalCameras }})</option>
+              <option value="4G">📡 4G ({{ camera4GCount }})</option>
+              <option value="WIFI">📶 WIFI ({{ cameraWIFICount }})</option>
+              <option value="Tactical">🎯 Tactical ({{ cameraTacticalCount }})</option>
+            </select>
           </div>
 
           <div class="form-control">
@@ -1919,6 +1962,24 @@ onUnmounted(() => {
         <button>close</button>
       </form>
     </dialog>
+
+        <!-- Image Preview Modal -->
+    <dialog id="image_preview_modal" class="modal">
+      <div class="modal-box max-w-4xl w-11/12">
+        <h3 class="font-bold text-lg mb-4">ภาพมุมกล้อง</h3>
+        <figure class="bg-base-200 rounded-lg overflow-hidden">
+          <img v-if="previewImage" :src="previewImage" alt="Camera View" class="w-full" />
+        </figure>
+        <div class="modal-action">
+          <form method="dialog">
+            <button class="btn">ปิด</button>
+          </form>
+        </div>
+      </div>
+      <form method="dialog" class="modal-backdrop">
+        <button>close</button>
+      </form>
+    </dialog>
   </div>
 </template>
 
@@ -1930,7 +1991,18 @@ onUnmounted(() => {
 .card:hover {
   transform: translateY(-4px);
 }
+/* 👇 เพิ่ม style สำหรับ stat cards ที่คลิกได้ */
+.stats.hover\:shadow-xl {
+  transition: all 0.2s ease-in-out;
+}
 
+.stats.hover\:shadow-xl:hover {
+  transform: translateY(-2px);
+}
+
+.stats.ring-2 {
+  transform: translateY(-2px);
+}
 figure img {
   transition: transform 0.3s ease-in-out;
 }

@@ -494,7 +494,7 @@ onMounted(async () => {
                 v-model="searchQuery"
                 type="text"
                 placeholder="ค้นหา Camera UID หรือชื่อกล้อง..."
-                class="input input-bordered flex-1"
+                class="input input-bordered flex-1 w-full"
               />
             </div>
           </div>
@@ -502,7 +502,7 @@ onMounted(async () => {
           <div class="form-control">
             <select
               v-model="filterOfficer"
-              class="select select-bordered min-w-[200px]"
+              class="select select-bordered min-w-[200px] w-full"
             >
               <option value="all">ทุกคน ({{ assignments.length }})</option>
               <option
