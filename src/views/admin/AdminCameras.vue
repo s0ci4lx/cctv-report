@@ -26,6 +26,8 @@ const viewMode = ref("cards");
 const isLargeScreen = ref(true);
 // 👇 เพิ่ม state สำหรับกรองประเภท
 const filterCameraType = ref("all");
+// เพิ่มใน state section
+const filterAssignmentStatus = ref("all"); // all, assigned, unassigned
 // 👇 เพิ่มตัวเลือกประเภทกล้อง
 const cameraTypes = [
   { value: "4G", label: "4G", icon: "📡", color: "badge-primary" },
@@ -77,6 +79,13 @@ const effectiveViewMode = computed(() => {
 const filteredCameras = computed(() => {
   let result = cameras.value;
 
+  // 👇 เพิ่มการกรองตามสถานะการมอบหมาย
+  if (filterAssignmentStatus.value === "assigned") {
+    result = result.filter((c) => isAssigned(c.cameraID));
+  } else if (filterAssignmentStatus.value === "unassigned") {
+    result = result.filter((c) => !isAssigned(c.cameraID));
+  }
+
   // กรองตามประเภทกล้อง
   if (filterCameraType.value !== "all") {
     result = result.filter((c) => {
@@ -116,9 +125,9 @@ const filteredCameras = computed(() => {
 const filterByType = (type) => {
   // ถ้าคลิกซ้ำประเภทเดิม → ยกเลิกการกรอง
   if (filterCameraType.value === type) {
-    filterCameraType.value = "all";   // กลับไปแสดงทั้งหมด
+    filterCameraType.value = "all"; // กลับไปแสดงทั้งหมด
   } else {
-    filterCameraType.value = type;    // กรองตามประเภทใหม่
+    filterCameraType.value = type; // กรองตามประเภทใหม่
   }
 };
 
@@ -133,6 +142,16 @@ const cameraTacticalCount = computed(
   () => cameras.value.filter((c) => c.cameraType === "Tactical").length
 );
 // --- Functions ---
+
+// 👇 เพิ่มฟังก์ชันกรองสถานะการมอบหมาย
+const filterByAssignmentStatus = (status) => {
+  // ถ้าคลิกซ้ำสถานะเดิม → ยกเลิกการกรอง
+  if (filterAssignmentStatus.value === status) {
+    filterAssignmentStatus.value = "all";
+  } else {
+    filterAssignmentStatus.value = status;
+  }
+};
 
 // 👇 ฟังก์ชันหาข้อมูล Camera Type
 const getCameraTypeInfo = (type) => {
@@ -522,8 +541,14 @@ onUnmounted(() => {
         </div>
       </button>
 
-      <!-- Card 2: Assigned -->
-      <div class="stats shadow bg-base-100">
+      <!-- Card 2: Assigned - คลิกกรองมอบหมายแล้ว -->
+      <button
+        @click="filterByAssignmentStatus('assigned')"
+        class="stats shadow bg-base-100 hover:shadow-xl transition-all cursor-pointer text-left"
+        :class="{
+          'ring-2 ring-success': filterAssignmentStatus === 'assigned',
+        }"
+      >
         <div class="stat">
           <div class="stat-figure text-success">
             <svg
@@ -550,10 +575,16 @@ onUnmounted(() => {
             }}% ของทั้งหมด
           </div>
         </div>
-      </div>
+      </button>
 
-      <!-- Card 3: Unassigned -->
-      <div class="stats shadow bg-base-100">
+      <!-- Card 3: Unassigned - คลิกกรองยังไม่มอบหมาย -->
+      <button
+        @click="filterByAssignmentStatus('unassigned')"
+        class="stats shadow bg-base-100 hover:shadow-xl transition-all cursor-pointer text-left"
+        :class="{
+          'ring-2 ring-warning': filterAssignmentStatus === 'unassigned',
+        }"
+      >
         <div class="stat">
           <div class="stat-figure text-warning">
             <svg
@@ -574,7 +605,7 @@ onUnmounted(() => {
           <div class="stat-value text-warning">{{ unassignedCameras }}</div>
           <div class="stat-desc">รอการมอบหมาย</div>
         </div>
-      </div>
+      </button>
 
       <!-- 👇 Card 4: 4G Cameras - คลิกกรอง 4G -->
       <button
@@ -658,11 +689,16 @@ onUnmounted(() => {
 
           <!-- 👇 เพิ่ม Dropdown กรองประเภท -->
           <div class="form-control">
-            <select v-model="filterCameraType" class="select select-bordered w-full">
+            <select
+              v-model="filterCameraType"
+              class="select select-bordered w-full"
+            >
               <option value="all">ทุกประเภท ({{ totalCameras }})</option>
               <option value="4G">📡 4G ({{ camera4GCount }})</option>
               <option value="WIFI">📶 WIFI ({{ cameraWIFICount }})</option>
-              <option value="Tactical">🎯 Tactical ({{ cameraTacticalCount }})</option>
+              <option value="Tactical">
+                🎯 Tactical ({{ cameraTacticalCount }})
+              </option>
             </select>
           </div>
 
@@ -1969,12 +2005,17 @@ onUnmounted(() => {
       </form>
     </dialog>
 
-        <!-- Image Preview Modal -->
+    <!-- Image Preview Modal -->
     <dialog id="image_preview_modal" class="modal">
       <div class="modal-box max-w-4xl w-11/12">
         <h3 class="font-bold text-lg mb-4">ภาพมุมกล้อง</h3>
         <figure class="bg-base-200 rounded-lg overflow-hidden">
-          <img v-if="previewImage" :src="previewImage" alt="Camera View" class="w-full" />
+          <img
+            v-if="previewImage"
+            :src="previewImage"
+            alt="Camera View"
+            class="w-full"
+          />
         </figure>
         <div class="modal-action">
           <form method="dialog">

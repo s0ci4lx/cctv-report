@@ -25,7 +25,8 @@ const sortBy = ref("cameraID");
 const viewMode = ref("cards");
 const isLargeScreen = ref(true);
 const filterCameraType = ref("all"); // 👈 เพิ่ม state กรอง
-
+// เพิ่มใน state section
+const filterAssignmentStatus = ref("all"); // all, assigned, unassigned
 // State สำหรับ Preview รูป
 const previewImage = ref(null);
 
@@ -58,7 +59,12 @@ const effectiveViewMode = computed(() => {
 // 👇 แก้ไข filteredCameras เพื่อรองรับการกรองตามประเภท
 const filteredCameras = computed(() => {
   let result = cameras.value;
-
+  // 👇 เพิ่มการกรองตามสถานะการมอบหมาย
+  if (filterAssignmentStatus.value === "assigned") {
+    result = result.filter((c) => isAssigned(c.cameraID));
+  } else if (filterAssignmentStatus.value === "unassigned") {
+    result = result.filter((c) => !isAssigned(c.cameraID));
+  }
   // กรองตามประเภทกล้อง
   if (filterCameraType.value !== "all") {
     result = result.filter((c) => {
@@ -96,13 +102,23 @@ const filteredCameras = computed(() => {
 
 // --- Functions ---
 
+// 👇 เพิ่มฟังก์ชันกรองสถานะการมอบหมาย
+const filterByAssignmentStatus = (status) => {
+  // ถ้าคลิกซ้ำสถานะเดิม → ยกเลิกการกรอง
+  if (filterAssignmentStatus.value === status) {
+    filterAssignmentStatus.value = "all";
+  } else {
+    filterAssignmentStatus.value = status;
+  }
+};
+
 // 👇 เพิ่มฟังก์ชันสำหรับคลิก Card
 const filterByType = (type) => {
   // ถ้าคลิกซ้ำประเภทเดิม → ยกเลิกการกรอง
   if (filterCameraType.value === type) {
-    filterCameraType.value = "all";   // กลับไปแสดงทั้งหมด
+    filterCameraType.value = "all"; // กลับไปแสดงทั้งหมด
   } else {
-    filterCameraType.value = type;    // กรองตามประเภทใหม่
+    filterCameraType.value = type; // กรองตามประเภทใหม่
   }
 };
 
@@ -295,8 +311,14 @@ onUnmounted(() => {
         </div>
       </button>
 
-      <!-- Card 2: Assigned -->
-      <div class="stats shadow bg-base-100">
+      <!-- Card 2: Assigned - คลิกกรองมอบหมายแล้ว -->
+      <button
+        @click="filterByAssignmentStatus('assigned')"
+        class="stats shadow bg-base-100 hover:shadow-xl transition-all cursor-pointer text-left"
+        :class="{
+          'ring-2 ring-success': filterAssignmentStatus === 'assigned',
+        }"
+      >
         <div class="stat">
           <div class="stat-figure text-success">
             <svg
@@ -323,10 +345,16 @@ onUnmounted(() => {
             }}% ของทั้งหมด
           </div>
         </div>
-      </div>
+      </button>
 
-      <!-- Card 3: Unassigned -->
-      <div class="stats shadow bg-base-100">
+      <!-- Card 3: Unassigned - คลิกกรองยังไม่มอบหมาย -->
+      <button
+        @click="filterByAssignmentStatus('unassigned')"
+        class="stats shadow bg-base-100 hover:shadow-xl transition-all cursor-pointer text-left"
+        :class="{
+          'ring-2 ring-warning': filterAssignmentStatus === 'unassigned',
+        }"
+      >
         <div class="stat">
           <div class="stat-figure text-warning">
             <svg
@@ -347,7 +375,7 @@ onUnmounted(() => {
           <div class="stat-value text-warning">{{ unassignedCameras }}</div>
           <div class="stat-desc">รอการมอบหมาย</div>
         </div>
-      </div>
+      </button>
 
       <!-- 👇 Card 4: 4G Cameras - คลิกกรอง -->
       <button

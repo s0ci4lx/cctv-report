@@ -694,8 +694,8 @@ onMounted(() => {
             </label>
 
             <!-- Email Field -->
-            <label class="form-control w-full">
-              <div class="label">
+            <label class="form-control w-full ">
+              <div class="label mt-2">
                 <span class="label-text font-medium">
                   อีเมล <span class="text-error">*</span>
                 </span>

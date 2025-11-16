@@ -11,23 +11,29 @@ import {
   query,
   orderBy,
 } from "firebase/firestore";
-import { useDialog } from "../../composables/useDialog.js"; // 👈 Import
+import { useDialog } from "../../composables/useDialog.js";
 
-// 👇 ใช้ composable
 const { showConfirm, showAlert, showToast } = useDialog();
+
 // --- State ---
 const assignments = ref([]);
-const cameras = ref([]); // 👈 (ใหม่) รายการกล้องทั้งหมด
+const cameras = ref([]);
 const officersList = ref([]);
 const loading = ref(true);
 const searchQuery = ref("");
 const filterOfficer = ref("all");
 const selectedIds = ref(new Set());
 
+// 👇 State สำหรับ Search ใน Dropdown
+const officerSearchQuery = ref("");
+const cameraSearchQuery = ref("");
+const isOfficerDropdownOpen = ref(false);
+const isCameraDropdownOpen = ref(false);
+
 // State สำหรับฟอร์มเพิ่ม
 const newAssignment = reactive({
   officerEmail: "",
-  cameraID: "", // 👈 (เปลี่ยน) จาก cameraName, cameraID, location → เหลือแค่ cameraID
+  cameraID: "",
 });
 
 // State สำหรับฟอร์มแก้ไข
@@ -63,13 +69,33 @@ const topOfficer = computed(() => {
   return { email: topEmail, count: max };
 });
 
-// (ใหม่) กล้องที่ยังไม่ได้มอบหมาย
 const availableCameras = computed(() => {
   const assignedCameraIDs = new Set(assignments.value.map((a) => a.cameraID));
   return cameras.value.filter((c) => !assignedCameraIDs.has(c.cameraID));
 });
 
-// กรองและค้นหา
+// 👇 Filtered Officers for Dropdown
+const filteredOfficers = computed(() => {
+  if (!officerSearchQuery.value) return officersList.value;
+  const query = officerSearchQuery.value.toLowerCase();
+  return officersList.value.filter(
+    (officer) =>
+      officer.name.toLowerCase().includes(query) ||
+      officer.email.toLowerCase().includes(query)
+  );
+});
+
+// 👇 Filtered Cameras for Dropdown
+const filteredCameras = computed(() => {
+  if (!cameraSearchQuery.value) return availableCameras.value;
+  const query = cameraSearchQuery.value.toLowerCase();
+  return availableCameras.value.filter(
+    (camera) =>
+      camera.cameraID.toLowerCase().includes(query) ||
+      camera.cameraName.toLowerCase().includes(query)
+  );
+});
+
 const filteredAssignments = computed(() => {
   let result = assignments.value;
 
@@ -100,7 +126,6 @@ const isAllSelected = computed(() => {
 
 // --- Functions ---
 
-// (ใหม่) ดึงข้อมูลกล้อง
 const fetchCameras = async () => {
   cameras.value = [];
   try {
@@ -114,7 +139,6 @@ const fetchCameras = async () => {
   }
 };
 
-// (ใหม่) หาข้อมูลกล้องจาก cameraID
 const getCameraInfo = (cameraID) => {
   return cameras.value.find((c) => c.cameraID === cameraID);
 };
@@ -127,10 +151,6 @@ const fetchOfficers = async () => {
     querySnapshot.forEach((doc) => {
       officersList.value.push(doc.data());
     });
-
-    if (officersList.value.length > 0) {
-      newAssignment.officerEmail = officersList.value[0].email;
-    }
   } catch (e) {
     console.error("Error fetching officers: ", e);
   }
@@ -150,7 +170,6 @@ const fetchAssignments = async () => {
   }
 };
 
-// Validation
 const validateForm = (data) => {
   formErrors.officerEmail = "";
   formErrors.cameraID = "";
@@ -170,14 +189,40 @@ const validateForm = (data) => {
 };
 
 const openAddModal = () => {
-  newAssignment.officerEmail =
-    officersList.value.length > 0 ? officersList.value[0].email : "";
-  newAssignment.cameraID =
-    availableCameras.value.length > 0 ? availableCameras.value[0].cameraID : "";
+  newAssignment.officerEmail = "";
+  newAssignment.cameraID = "";
+  officerSearchQuery.value = "";
+  cameraSearchQuery.value = "";
+  isOfficerDropdownOpen.value = false;
+  isCameraDropdownOpen.value = false;
   formErrors.officerEmail = "";
   formErrors.cameraID = "";
   document.getElementById("add_assignment_modal").showModal();
 };
+
+// 👇 Select Officer
+const selectOfficer = (officer) => {
+  newAssignment.officerEmail = officer.email;
+  isOfficerDropdownOpen.value = false;
+  officerSearchQuery.value = "";
+};
+
+// 👇 Select Camera
+const selectCamera = (camera) => {
+  newAssignment.cameraID = camera.cameraID;
+  isCameraDropdownOpen.value = false;
+  cameraSearchQuery.value = "";
+};
+
+// 👇 Get Selected Officer Info
+const getSelectedOfficer = computed(() => {
+  return officersList.value.find((o) => o.email === newAssignment.officerEmail);
+});
+
+// 👇 Get Selected Camera Info
+const getSelectedCamera = computed(() => {
+  return cameras.value.find((c) => c.cameraID === newAssignment.cameraID);
+});
 
 const handleAddAssignment = async () => {
   if (!validateForm(newAssignment)) {
@@ -261,7 +306,6 @@ const handleUpdateAssignment = async () => {
   }
 };
 
-// Bulk Actions
 const toggleSelectAll = () => {
   if (isAllSelected.value) {
     selectedIds.value.clear();
@@ -315,7 +359,6 @@ const getOfficerName = (email) => {
   return officer ? officer.name : email;
 };
 
-// Copy to Clipboard
 const copyToClipboard = async (text, successMessage = "คัดลอกแล้ว ✅") => {
   try {
     await navigator.clipboard.writeText(text);
@@ -326,14 +369,9 @@ const copyToClipboard = async (text, successMessage = "คัดลอกแล�
   }
 };
 
-// --- Lifecycle ---
 onMounted(async () => {
   loading.value = true;
-  await Promise.all([
-    fetchCameras(), // 👈 (ใหม่)
-    fetchOfficers(),
-    fetchAssignments(),
-  ]);
+  await Promise.all([fetchCameras(), fetchOfficers(), fetchAssignments()]);
   loading.value = false;
 });
 </script>
@@ -603,26 +641,6 @@ onMounted(async () => {
                 </td>
                 <td>
                   <div class="flex items-center gap-3">
-                    <div class="avatar placeholder">
-                      <div
-                        class="bg-primary text-primary-content rounded-full w-10"
-                      >
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          class="h-5 w-5"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          stroke="currentColor"
-                        >
-                          <path
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            stroke-width="2"
-                            d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"
-                          />
-                        </svg>
-                      </div>
-                    </div>
                     <div>
                       <div class="font-bold">
                         {{
@@ -643,15 +661,6 @@ onMounted(async () => {
                 </td>
                 <td>
                   <div class="flex items-center gap-2">
-                    <div class="avatar placeholder">
-                      <div
-                        class="bg-neutral text-neutral-content rounded-full w-8"
-                      >
-                        <span class="text-xs">{{
-                          getOfficerName(item.officerEmail)[0]
-                        }}</span>
-                      </div>
-                    </div>
                     <span class="text-sm">{{
                       getOfficerName(item.officerEmail)
                     }}</span>
@@ -720,7 +729,6 @@ onMounted(async () => {
         :class="{ 'ring-2 ring-primary': selectedIds.has(item.id) }"
       >
         <div class="card-body p-4">
-          <!-- Header: Checkbox + Camera UID -->
           <div class="flex justify-between items-start mb-3">
             <label class="cursor-pointer flex items-center gap-2">
               <input
@@ -744,7 +752,6 @@ onMounted(async () => {
             </label>
           </div>
 
-          <!-- Camera Info -->
           <div class="flex items-start gap-3 mb-3">
             <div class="avatar placeholder">
               <div class="bg-primary text-primary-content rounded-full w-12">
@@ -799,10 +806,8 @@ onMounted(async () => {
             </div>
           </div>
 
-          <!-- Divider -->
           <div class="divider my-2"></div>
 
-          <!-- Officer Info -->
           <div class="mb-3">
             <div class="text-xs font-semibold text-base-content/70 mb-2">
               เจ้าหน้าที่รับผิดชอบ
@@ -826,7 +831,6 @@ onMounted(async () => {
             </div>
           </div>
 
-          <!-- Actions -->
           <div class="flex gap-2">
             <button
               @click="openEditModal(item)"
@@ -999,28 +1003,122 @@ onMounted(async () => {
               <h4 class="font-semibold text-lg">ข้อมูลการมอบหมาย</h4>
             </div>
 
-            <!-- Officer Select -->
+            <!-- 👇 Custom Officer Dropdown with Search -->
             <label class="form-control w-full">
               <div class="label">
                 <span class="label-text font-medium">
                   เจ้าหน้าที่รับผิดชอบ <span class="text-error">*</span>
                 </span>
               </div>
-              <select
-                v-model="newAssignment.officerEmail"
-                class="select select-bordered w-full"
-                :class="{ 'select-error': formErrors.officerEmail }"
-                required
+
+              <!-- Selected Value Display -->
+              <div
+                @click="isOfficerDropdownOpen = !isOfficerDropdownOpen"
+                class="input input-bordered w-full flex items-center justify-between cursor-pointer"
+                :class="{
+                  'input-error': formErrors.officerEmail,
+                  'input-primary': isOfficerDropdownOpen,
+                }"
               >
-                <option disabled value="">โปรดเลือกเจ้าหน้าที่</option>
-                <option
-                  v-for="officer in officersList"
-                  :key="officer.email"
-                  :value="officer.email"
+                <span v-if="getSelectedOfficer" class="flex items-center gap-2">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    class="h-4 w-4"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                    />
+                  </svg>
+                  {{ getSelectedOfficer.name }} ({{ getSelectedOfficer.email }})
+                </span>
+                <span v-else class="text-base-content/50"
+                  >เลือกเจ้าหน้าที่...</span
                 >
-                  👤 {{ officer.name }} ({{ officer.email }})
-                </option>
-              </select>
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  class="h-5 w-5 transition-transform"
+                  :class="{ 'rotate-180': isOfficerDropdownOpen }"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M19 9l-7 7-7-7"
+                  />
+                </svg>
+              </div>
+
+              <!-- Dropdown Menu -->
+              <div
+                v-show="isOfficerDropdownOpen"
+                class="card bg-base-100 shadow-lg mt-2 p-2 w-full max-h-80 overflow-y-auto border border-base-300"
+              >
+                <!-- Search Box -->
+                <div class="sticky top-0 bg-base-100 z-10 pb-2">
+                  <input
+                    v-model="officerSearchQuery"
+                    type="text"
+                    placeholder="🔍 ค้นหาชื่อหรืออีเมล..."
+                    class="input input-bordered input-sm w-full"
+                    @click.stop
+                  />
+                </div>
+
+                <!-- Officer List -->
+                <ul class="menu p-0">
+                  <li
+                    v-for="officer in filteredOfficers"
+                    :key="officer.email"
+                    @click="selectOfficer(officer)"
+                    class="hover:bg-primary hover:text-primary-content py-2 px-3 rounded-lg cursor-pointer transition-colors"
+                    :class="{
+                      'bg-primary/20':
+                        newAssignment.officerEmail === officer.email,
+                    }"
+                  >
+                    <div class="flex items-center justify-between gap-3 w-full">
+                      <div class="flex-1 min-w-0">
+                        <div class="font-medium text-sm truncate">
+                          {{ officer.name }}
+                        </div>
+                        <div class="text-xs opacity-70 truncate">
+                          {{ officer.email }}
+                        </div>
+                      </div>
+                      <svg
+                        v-if="newAssignment.officerEmail === officer.email"
+                        xmlns="http://www.w3.org/2000/svg"
+                        class="h-4 w-4 text-primary shrink-0"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          stroke-width="2"
+                          d="M5 13l4 4L19 7"
+                        />
+                      </svg>
+                    </div>
+                  </li>
+                  <li v-if="filteredOfficers.length === 0">
+                    <div class="text-center text-base-content/50 py-4 text-sm">
+                      ไม่พบเจ้าหน้าที่
+                    </div>
+                  </li>
+                </ul>
+              </div>
+
               <div class="label" v-if="formErrors.officerEmail">
                 <span class="label-text-alt text-error flex items-center gap-1">
                   <svg
@@ -1042,7 +1140,7 @@ onMounted(async () => {
               </div>
             </label>
 
-            <!-- Camera Select -->
+            <!-- 👇 Custom Camera Dropdown with Search -->
             <label class="form-control w-full">
               <div class="label mt-2">
                 <span class="label-text font-medium">
@@ -1052,21 +1150,114 @@ onMounted(async () => {
                   >{{ availableCameras.length }} กล้องว่าง</span
                 >
               </div>
-              <select
-                v-model="newAssignment.cameraID"
-                class="select select-bordered w-full"
-                :class="{ 'select-error': formErrors.cameraID }"
-                required
+
+              <!-- Selected Value Display -->
+              <div
+                @click="isCameraDropdownOpen = !isCameraDropdownOpen"
+                class="input input-bordered w-full flex items-center justify-between cursor-pointer"
+                :class="{
+                  'input-error': formErrors.cameraID,
+                  'input-primary': isCameraDropdownOpen,
+                }"
               >
-                <option disabled value="">โปรดเลือกกล้อง</option>
-                <option
-                  v-for="camera in availableCameras"
-                  :key="camera.cameraID"
-                  :value="camera.cameraID"
+                <span v-if="getSelectedCamera" class="flex items-center gap-2">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    class="h-4 w-4"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"
+                    />
+                  </svg>
+                  {{ getSelectedCamera.cameraID }} -
+                  {{ getSelectedCamera.cameraName }}
+                </span>
+                <span v-else class="text-base-content/50">เลือกกล้อง...</span>
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  class="h-5 w-5 transition-transform"
+                  :class="{ 'rotate-180': isCameraDropdownOpen }"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
                 >
-                  📹 {{ camera.cameraID }} - {{ camera.cameraName }}
-                </option>
-              </select>
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M19 9l-7 7-7-7"
+                  />
+                </svg>
+              </div>
+
+              <!-- Dropdown Menu -->
+              <div
+                v-show="isCameraDropdownOpen"
+                class="card bg-base-100 shadow-lg mt-2 p-2 w-full max-h-80 overflow-y-auto border border-base-300"
+              >
+                <!-- Search Box -->
+                <div class="sticky top-0 bg-base-100 z-10 pb-2">
+                  <input
+                    v-model="cameraSearchQuery"
+                    type="text"
+                    placeholder="🔍 ค้นหา Camera UID หรือชื่อกล้อง..."
+                    class="input input-bordered input-sm w-full"
+                    @click.stop
+                  />
+                </div>
+
+                <!-- Camera List -->
+                <ul class="menu p-0">
+                  <li
+                    v-for="camera in filteredCameras"
+                    :key="camera.cameraID"
+                    @click="selectCamera(camera)"
+                    class=" hover:bg-primary hover:text-primary-content py-2 px-3 rounded-lg cursor-pointer transition-colors"
+                    :class="{
+                      'bg-primary/20':
+                        newAssignment.cameraID === camera.cameraID,
+                    }"
+                  >
+                    <div class="flex items-center justify-between gap-3 w-full">
+                      <div class="flex-1 min-w-0">
+                        <div class="font-medium text-sm truncate">
+                          {{ camera.cameraID }}
+                        </div>
+                        <div class="text-xs opacity-70 truncate">
+                          {{ camera.cameraName }}
+                        </div>
+                      </div>
+                      <svg
+                        v-if="newAssignment.cameraID === camera.cameraID"
+                        xmlns="http://www.w3.org/2000/svg"
+                        class="h-4 w-4 text-primary shrink-0"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          stroke-width="2"
+                          d="M5 13l4 4L19 7"
+                        />
+                      </svg>
+                    </div>
+                  </li>
+                  <li v-if="filteredCameras.length === 0">
+                    <div class="text-center text-base-content/50 py-4 text-sm">
+                      ไม่พบกล้อง
+                    </div>
+                  </li>
+                </ul>
+              </div>
+
               <div class="label" v-if="formErrors.cameraID">
                 <span class="label-text-alt text-error flex items-center gap-1">
                   <svg
@@ -1175,7 +1366,6 @@ onMounted(async () => {
     <!-- Modal: Edit Assignment -->
     <dialog id="edit_modal" class="modal">
       <div class="modal-box max-w-2xl">
-        <!-- Header -->
         <div class="flex items-center gap-3 mb-6 pb-4 border-b border-base-300">
           <div class="p-3 bg-warning/10 rounded-lg">
             <svg
@@ -1206,7 +1396,6 @@ onMounted(async () => {
           @submit.prevent="handleUpdateAssignment"
           class="space-y-6"
         >
-          <!-- ข้อมูล Assignment -->
           <div class="space-y-4">
             <div class="flex items-center gap-2">
               <svg
@@ -1226,7 +1415,6 @@ onMounted(async () => {
               <h4 class="font-semibold text-lg">ข้อมูลการมอบหมาย</h4>
             </div>
 
-            <!-- Officer Select -->
             <label class="form-control w-full">
               <div class="label">
                 <span class="label-text font-medium">
@@ -1268,7 +1456,6 @@ onMounted(async () => {
               </div>
             </label>
 
-            <!-- Camera Display (Read-only) -->
             <label class="form-control w-full">
               <div class="label">
                 <span class="label-text font-medium">กล้อง</span>
@@ -1302,7 +1489,6 @@ onMounted(async () => {
             </label>
           </div>
 
-          <!-- Actions -->
           <div class="flex gap-3 pt-4 border-t border-base-300">
             <button
               type="button"
