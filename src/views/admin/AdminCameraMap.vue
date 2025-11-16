@@ -69,12 +69,14 @@ const filteredCameras = computed(() => {
 
 const stats = computed(() => {
   // 👇 กล้องทั้งหมดที่มีพิกัด (ไม่เปลี่ยนตามการกรอง)
-  const allCamerasWithCoords = cameras.value.filter((c) => c.latitude && c.longitude);
+  const allCamerasWithCoords = cameras.value.filter(
+    (c) => c.latitude && c.longitude
+  );
   const totalAll = allCamerasWithCoords.length;
-  
+
   // 👇 กล้องที่กรองตามประเภท (สำหรับคำนวณมอบหมาย/ไม่มอบหมาย)
   let filteredCamerasWithCoords = allCamerasWithCoords;
-  
+
   if (filterCameraType.value !== "all") {
     filteredCamerasWithCoords = filteredCamerasWithCoords.filter((c) => {
       const cameraType = c.cameraType || "4G";
@@ -82,7 +84,9 @@ const stats = computed(() => {
     });
   }
 
-  const assigned = filteredCamerasWithCoords.filter((c) => isAssigned(c.cameraID)).length;
+  const assigned = filteredCamerasWithCoords.filter((c) =>
+    isAssigned(c.cameraID)
+  ).length;
 
   return {
     total: totalAll, // 👈 แสดงกล้องทั้งหมดตลอด
@@ -454,244 +458,248 @@ onBeforeUnmount(() => {
 
     <div v-else>
       <!-- Statistics - 6 Cards -->
-<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
-  <!-- Card 1: Total - คลิกแสดงทั้งหมด -->
-  <button
-    @click="
-      filterCameraType = 'all';
-      filterStatus = 'all';
-    "
-    class="stats shadow bg-base-100 hover:shadow-xl transition-all cursor-pointer text-left"
-    :class="{
-      'ring-2 ring-primary':
-        filterCameraType === 'all' && filterStatus === 'all',
-    }"
-  >
-    <div class="stat">
-      <div class="stat-figure text-primary">
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          fill="none"
-          viewBox="0 0 24 24"
-          class="inline-block w-8 h-8 stroke-current"
-        >
-          <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            stroke-width="2"
-            d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"
-          />
-        </svg>
-      </div>
-      <div class="stat-title">กล้องทั้งหมด</div>
-      <div class="stat-value text-primary">{{ stats.total }}</div>
-      <div class="stat-desc">มีพิกัดในระบบ</div>
-    </div>
-  </button>
-
-  <!-- Card 2: Assigned - คลิกกรองมอบหมายแล้ว -->
-  <button
-    @click="filterByAssignmentStatus('assigned')"
-    class="stats shadow bg-base-100 hover:shadow-xl transition-all cursor-pointer text-left"
-    :class="{ 'ring-2 ring-success': filterStatus === 'assigned' }"
-  >
-    <div class="stat">
-      <div class="stat-figure text-success">
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          fill="none"
-          viewBox="0 0 24 24"
-          class="inline-block w-8 h-8 stroke-current"
-        >
-          <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            stroke-width="2"
-            d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-          />
-        </svg>
-      </div>
-      <div class="stat-title">มอบหมายแล้ว</div>
-      <div class="stat-value text-success">{{ stats.assigned }}</div>
-      <div class="stat-desc">
-        {{
-          stats.total > 0
-            ? Math.round((stats.assigned / stats.total) * 100)
-            : 0
-        }}% ของทั้งหมด
-      </div>
-    </div>
-  </button>
-
-  <!-- Card 3: Unassigned - คลิกกรองยังไม่มอบหมาย -->
-  <button
-    @click="filterByAssignmentStatus('unassigned')"
-    class="stats shadow bg-base-100 hover:shadow-xl transition-all cursor-pointer text-left"
-    :class="{ 'ring-2 ring-warning': filterStatus === 'unassigned' }"
-  >
-    <div class="stat">
-      <div class="stat-figure text-warning">
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          fill="none"
-          viewBox="0 0 24 24"
-          class="inline-block w-8 h-8 stroke-current"
-        >
-          <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            stroke-width="2"
-            d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-          />
-        </svg>
-      </div>
-      <div class="stat-title">ยังไม่มอบหมาย</div>
-      <div class="stat-value text-warning">{{ stats.unassigned }}</div>
-      <div class="stat-desc">รอการมอบหมาย</div>
-    </div>
-  </button>
-
-  <!-- Card 4: 4G Cameras - คลิกกรอง 4G -->
-  <button
-    @click="filterByType('4G')"
-    class="stats shadow bg-base-100 hover:shadow-xl transition-all cursor-pointer text-left"
-    :class="{ 'ring-2 ring-primary': filterCameraType === '4G' }"
-  >
-    <div class="stat">
-      <div class="stat-figure text-primary">
-        <div class="text-4xl">📡</div>
-      </div>
-      <div class="stat-title">กล้อง 4G</div>
-      <div class="stat-value text-primary">
-        {{ cameraTypeStats.camera4G }}
-      </div>
-      <div class="stat-desc">
-        {{
-          stats.total > 0
-            ? Math.round((cameraTypeStats.camera4G / stats.total) * 100)
-            : 0
-        }}% ของทั้งหมด
-      </div>
-    </div>
-  </button>
-
-  <!-- Card 5: WIFI Cameras - คลิกกรอง WIFI -->
-  <button
-    @click="filterByType('WIFI')"
-    class="stats shadow bg-base-100 hover:shadow-xl transition-all cursor-pointer text-left"
-    :class="{ 'ring-2 ring-info': filterCameraType === 'WIFI' }"
-  >
-    <div class="stat">
-      <div class="stat-figure text-info">
-        <div class="text-4xl">📶</div>
-      </div>
-      <div class="stat-title">กล้อง WIFI</div>
-      <div class="stat-value text-info">
-        {{ cameraTypeStats.cameraWIFI }}
-      </div>
-      <div class="stat-desc">
-        {{
-          stats.total > 0
-            ? Math.round((cameraTypeStats.cameraWIFI / stats.total) * 100)
-            : 0
-        }}% ของทั้งหมด
-      </div>
-    </div>
-  </button>
-
-  <!-- Card 6: Tactical Cameras - คลิกกรอง Tactical -->
-  <button
-    @click="filterByType('Tactical')"
-    class="stats shadow bg-base-100 hover:shadow-xl transition-all cursor-pointer text-left"
-    :class="{ 'ring-2 ring-warning': filterCameraType === 'Tactical' }"
-  >
-    <div class="stat">
-      <div class="stat-figure text-warning">
-        <div class="text-4xl">🎯</div>
-      </div>
-      <div class="stat-title">กล้อง Tactical</div>
-      <div class="stat-value text-warning">
-        {{ cameraTypeStats.cameraTactical }}
-      </div>
-      <div class="stat-desc">
-        {{
-          stats.total > 0
-            ? Math.round(
-                (cameraTypeStats.cameraTactical / stats.total) * 100
-              )
-            : 0
-        }}% ของทั้งหมด
-      </div>
-    </div>
-  </button>
-</div>
-
-      <!-- Filters -->
-<div class="card bg-base-100 shadow-md mb-6">
-  <div class="card-body p-4">
-    <div class="flex flex-col md:flex-row gap-4 md:items-end">
-      <div class="form-control w-full md:flex-1">
-        <input
-          v-model="searchQuery"
-          type="text"
-          placeholder="ค้นหาชื่อกล้อง หรือ UID..."
-          class="input input-bordered w-full"
-        />
-      </div>
-
-      <!-- 👇 เพิ่ม Dropdown กรองประเภทกล้อง -->
-      <div class="form-control w-full md:w-auto">
-        <select
-          v-model="filterCameraType"
-          class="select select-bordered w-full"
-        >
-          <option value="all">ทุกประเภท ({{ stats.total }})</option>
-          <option value="4G">
-            📡 4G ({{ cameraTypeStats.camera4G }})
-          </option>
-          <option value="WIFI">
-            📶 WIFI ({{ cameraTypeStats.cameraWIFI }})
-          </option>
-          <option value="Tactical">
-            🎯 Tactical ({{ cameraTypeStats.cameraTactical }})
-          </option>
-        </select>
-      </div>
-
-      <div
-        class="form-control w-full md:w-auto md:flex-row md:items-center md:gap-2"
-      >
-        <label class="label md:p-0">
-          <span class="label-text font-semibold pe-2 ps-2">สถานะ</span>
-        </label>
-        <select
-          v-model="filterStatus"
-          class="select select-bordered w-full md:w-auto"
-        >
-          <option value="all">ทั้งหมด ({{ stats.total }})</option>
-          <option value="assigned">
-            มอบหมายแล้ว ({{ stats.assigned }})
-          </option>
-          <option value="unassigned">
-            ยังไม่มอบหมาย ({{ stats.unassigned }})
-          </option>
-        </select>
-
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+        <!-- Card 1: Total - คลิกแสดงทั้งหมด -->
         <button
-          v-if="searchQuery || filterStatus !== 'all' || filterCameraType !== 'all'"
           @click="
-            searchQuery = '';
-            filterStatus = 'all';
             filterCameraType = 'all';
+            filterStatus = 'all';
           "
-          class="btn btn-error btn-sm mt-2 md:mt-0 w-full md:w-auto md:ms-2"
+          class="stats shadow bg-base-100 hover:shadow-xl transition-all cursor-pointer text-left"
+          :class="{
+            'ring-2 ring-primary':
+              filterCameraType === 'all' && filterStatus === 'all',
+          }"
         >
-          ล้างตัวกรอง
+          <div class="stat">
+            <div class="stat-figure text-primary">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                class="inline-block w-8 h-8 stroke-current"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"
+                />
+              </svg>
+            </div>
+            <div class="stat-title">กล้องทั้งหมด</div>
+            <div class="stat-value text-primary">{{ stats.total }}</div>
+            <div class="stat-desc">มีพิกัดในระบบ</div>
+          </div>
+        </button>
+
+        <!-- Card 2: Assigned - คลิกกรองมอบหมายแล้ว -->
+        <button
+          @click="filterByAssignmentStatus('assigned')"
+          class="stats shadow bg-base-100 hover:shadow-xl transition-all cursor-pointer text-left"
+          :class="{ 'ring-2 ring-success': filterStatus === 'assigned' }"
+        >
+          <div class="stat">
+            <div class="stat-figure text-success">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                class="inline-block w-8 h-8 stroke-current"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                />
+              </svg>
+            </div>
+            <div class="stat-title">มอบหมายแล้ว</div>
+            <div class="stat-value text-success">{{ stats.assigned }}</div>
+            <div class="stat-desc">
+              {{
+                stats.total > 0
+                  ? Math.round((stats.assigned / stats.total) * 100)
+                  : 0
+              }}% ของทั้งหมด
+            </div>
+          </div>
+        </button>
+
+        <!-- Card 3: Unassigned - คลิกกรองยังไม่มอบหมาย -->
+        <button
+          @click="filterByAssignmentStatus('unassigned')"
+          class="stats shadow bg-base-100 hover:shadow-xl transition-all cursor-pointer text-left"
+          :class="{ 'ring-2 ring-warning': filterStatus === 'unassigned' }"
+        >
+          <div class="stat">
+            <div class="stat-figure text-warning">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                class="inline-block w-8 h-8 stroke-current"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                />
+              </svg>
+            </div>
+            <div class="stat-title">ยังไม่มอบหมาย</div>
+            <div class="stat-value text-warning">{{ stats.unassigned }}</div>
+            <div class="stat-desc">รอการมอบหมาย</div>
+          </div>
+        </button>
+
+        <!-- Card 4: 4G Cameras - คลิกกรอง 4G -->
+        <button
+          @click="filterByType('4G')"
+          class="stats shadow bg-base-100 hover:shadow-xl transition-all cursor-pointer text-left"
+          :class="{ 'ring-2 ring-primary': filterCameraType === '4G' }"
+        >
+          <div class="stat">
+            <div class="stat-figure text-primary">
+              <div class="text-4xl">📡</div>
+            </div>
+            <div class="stat-title">กล้อง 4G</div>
+            <div class="stat-value text-primary">
+              {{ cameraTypeStats.camera4G }}
+            </div>
+            <div class="stat-desc">
+              {{
+                stats.total > 0
+                  ? Math.round((cameraTypeStats.camera4G / stats.total) * 100)
+                  : 0
+              }}% ของทั้งหมด
+            </div>
+          </div>
+        </button>
+
+        <!-- Card 5: WIFI Cameras - คลิกกรอง WIFI -->
+        <button
+          @click="filterByType('WIFI')"
+          class="stats shadow bg-base-100 hover:shadow-xl transition-all cursor-pointer text-left"
+          :class="{ 'ring-2 ring-info': filterCameraType === 'WIFI' }"
+        >
+          <div class="stat">
+            <div class="stat-figure text-info">
+              <div class="text-4xl">📶</div>
+            </div>
+            <div class="stat-title">กล้อง WIFI</div>
+            <div class="stat-value text-info">
+              {{ cameraTypeStats.cameraWIFI }}
+            </div>
+            <div class="stat-desc">
+              {{
+                stats.total > 0
+                  ? Math.round((cameraTypeStats.cameraWIFI / stats.total) * 100)
+                  : 0
+              }}% ของทั้งหมด
+            </div>
+          </div>
+        </button>
+
+        <!-- Card 6: Tactical Cameras - คลิกกรอง Tactical -->
+        <button
+          @click="filterByType('Tactical')"
+          class="stats shadow bg-base-100 hover:shadow-xl transition-all cursor-pointer text-left"
+          :class="{ 'ring-2 ring-warning': filterCameraType === 'Tactical' }"
+        >
+          <div class="stat">
+            <div class="stat-figure text-warning">
+              <div class="text-4xl">🎯</div>
+            </div>
+            <div class="stat-title">กล้อง Tactical</div>
+            <div class="stat-value text-warning">
+              {{ cameraTypeStats.cameraTactical }}
+            </div>
+            <div class="stat-desc">
+              {{
+                stats.total > 0
+                  ? Math.round(
+                      (cameraTypeStats.cameraTactical / stats.total) * 100
+                    )
+                  : 0
+              }}% ของทั้งหมด
+            </div>
+          </div>
         </button>
       </div>
-    </div>
-  </div>
-</div>
+
+      <!-- Filters -->
+      <div class="card bg-base-100 shadow-md mb-6">
+        <div class="card-body p-4">
+          <div class="flex flex-col md:flex-row gap-4 md:items-end">
+            <div class="form-control w-full md:flex-1">
+              <input
+                v-model="searchQuery"
+                type="text"
+                placeholder="ค้นหาชื่อกล้อง หรือ UID..."
+                class="input input-bordered w-full"
+              />
+            </div>
+
+            <!-- 👇 เพิ่ม Dropdown กรองประเภทกล้อง -->
+            <div class="form-control w-full md:w-auto">
+              <select
+                v-model="filterCameraType"
+                class="select select-bordered w-full"
+              >
+                <option value="all">ทุกประเภท ({{ stats.total }})</option>
+                <option value="4G">
+                  📡 4G ({{ cameraTypeStats.camera4G }})
+                </option>
+                <option value="WIFI">
+                  📶 WIFI ({{ cameraTypeStats.cameraWIFI }})
+                </option>
+                <option value="Tactical">
+                  🎯 Tactical ({{ cameraTypeStats.cameraTactical }})
+                </option>
+              </select>
+            </div>
+
+            <div
+              class="form-control w-full md:w-auto md:flex-row md:items-center md:gap-2"
+            >
+              <label class="label md:p-0">
+                <span class="label-text font-semibold pe-2 ps-2">สถานะ</span>
+              </label>
+              <select
+                v-model="filterStatus"
+                class="select select-bordered w-full md:w-auto"
+              >
+                <option value="all">ทั้งหมด ({{ stats.total }})</option>
+                <option value="assigned">
+                  มอบหมายแล้ว ({{ stats.assigned }})
+                </option>
+                <option value="unassigned">
+                  ยังไม่มอบหมาย ({{ stats.unassigned }})
+                </option>
+              </select>
+
+              <button
+                v-if="
+                  searchQuery ||
+                  filterStatus !== 'all' ||
+                  filterCameraType !== 'all'
+                "
+                @click="
+                  searchQuery = '';
+                  filterStatus = 'all';
+                  filterCameraType = 'all';
+                "
+                class="btn btn-error btn-sm mt-2 md:mt-0 w-full md:w-auto md:ms-2"
+              >
+                ล้างตัวกรอง
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
       <!-- Header -->
       <div
         class="flex flex-col hidden md:flex md:flex-row justify-between items-start md:items-center mb-4 gap-4"
@@ -754,7 +762,7 @@ onBeforeUnmount(() => {
       <!-- Mobile Buttons -->
       <div class="flex justify-end gap-2 mb-2 md:hidden">
         <div class="ms-2 me-auto mt-2">
-          <h2 class=" text-2xl font-bold text-base-content">
+          <h2 class="text-2xl font-bold text-base-content">
             แผนที่จุดติดตั้งกล้อง
           </h2>
         </div>
@@ -845,9 +853,9 @@ onBeforeUnmount(() => {
               class="flex items-center justify-between p-3 bg-base-200 rounded-lg hover:bg-base-300 cursor-pointer transition-colors"
               @click="zoomToCamera(camera)"
             >
-              <div class="flex items-center gap-3 flex-1">
+              <div class="flex items-center gap-3 flex-1 min-w-0">
                 <div
-                  class="w-2 h-2 rounded-full"
+                  class="w-2 h-2 rounded-full shrink-0"
                   :class="
                     isAssigned(camera.cameraID) ? 'bg-success' : 'bg-warning'
                   "
@@ -862,27 +870,42 @@ onBeforeUnmount(() => {
                 </div>
               </div>
 
-              <button class="btn btn-ghost btn-sm btn-circle">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke-width="1.5"
-                  stroke="currentColor"
-                  class="w-5 h-5"
+              <!-- 👇 เพิ่ม Badge ประเภทกล้อง และไอคอนซูม -->
+              <div class="flex items-center gap-2 shrink-0">
+                <div
+                  class="badge badge-sm gap-1"
+                  :class="getCameraTypeInfo(camera.cameraType || '4G').color"
                 >
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z"
-                  />
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z"
-                  />
-                </svg>
-              </button>
+                  <span class="text-xs">{{
+                    getCameraTypeInfo(camera.cameraType || "4G").icon
+                  }}</span>
+                  <span class="text-xs font-semibold">{{
+                    getCameraTypeInfo(camera.cameraType || "4G").label
+                  }}</span>
+                </div>
+
+                <button class="btn btn-ghost btn-sm btn-circle">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke-width="1.5"
+                    stroke="currentColor"
+                    class="w-5 h-5"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z"
+                    />
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z"
+                    />
+                  </svg>
+                </button>
+              </div>
             </div>
           </div>
         </div>
