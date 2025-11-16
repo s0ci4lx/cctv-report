@@ -30,6 +30,18 @@ const cameraSearchQuery = ref("");
 const isOfficerDropdownOpen = ref(false);
 const isCameraDropdownOpen = ref(false);
 
+// 👇 เพิ่มตัวเลือกประเภทกล้อง
+const cameraTypes = [
+  { value: "4G", label: "4G", icon: "📡", color: "badge-primary" },
+  { value: "WIFI", label: "WIFI", icon: "📶", color: "badge-info" },
+  { value: "Tactical", label: "Tactical", icon: "🎯", color: "badge-warning" },
+];
+
+// 👇 เพิ่มฟังก์ชันหาข้อมูล Camera Type
+const getCameraTypeInfo = (type) => {
+  return cameraTypes.find((t) => t.value === type) || cameraTypes[0];
+};
+
 // State สำหรับฟอร์มเพิ่ม
 const newAssignment = reactive({
   officerEmail: "",
@@ -602,6 +614,8 @@ onMounted(async () => {
                     />
                   </label>
                 </th>
+                <th>ประเภท</th>
+                <!-- 👈 เพิ่มคอลัมน์นี้ -->
                 <th>Camera UID</th>
                 <th>ชื่อกล้อง / จุดติดตั้ง</th>
                 <th>เจ้าหน้าที่รับผิดชอบ</th>
@@ -626,6 +640,27 @@ onMounted(async () => {
                   </label>
                 </td>
                 <td>
+                  <div
+                    class="badge badge-lg gap-2"
+                    :class="
+                      getCameraTypeInfo(
+                        getCameraInfo(item.cameraID)?.cameraType || '4G'
+                      ).color
+                    "
+                  >
+                    <span>{{
+                      getCameraTypeInfo(
+                        getCameraInfo(item.cameraID)?.cameraType || "4G"
+                      ).icon
+                    }}</span>
+                    <span class="text-xs font-semibold">{{
+                      getCameraTypeInfo(
+                        getCameraInfo(item.cameraID)?.cameraType || "4G"
+                      ).label
+                    }}</span>
+                  </div>
+                </td>
+                <td>
                   <button
                     @click="
                       copyToClipboard(
@@ -639,6 +674,7 @@ onMounted(async () => {
                     {{ item.cameraID }}
                   </button>
                 </td>
+                <!-- 👇 เพิ่มคอลัมน์ประเภทกล้อง -->
                 <td>
                   <div class="flex items-center gap-3">
                     <div>
@@ -750,6 +786,27 @@ onMounted(async () => {
                 {{ item.cameraID }}
               </button>
             </label>
+
+            <!-- 👇 เพิ่ม Badge ประเภทกล้อง -->
+            <div
+              class="badge badge-lg gap-2"
+              :class="
+                getCameraTypeInfo(
+                  getCameraInfo(item.cameraID)?.cameraType || '4G'
+                ).color
+              "
+            >
+              <span>{{
+                getCameraTypeInfo(
+                  getCameraInfo(item.cameraID)?.cameraType || "4G"
+                ).icon
+              }}</span>
+              <span class="font-semibold">{{
+                getCameraTypeInfo(
+                  getCameraInfo(item.cameraID)?.cameraType || "4G"
+                ).label
+              }}</span>
+            </div>
           </div>
 
           <div class="flex items-start gap-3 mb-3">
@@ -1218,9 +1275,10 @@ onMounted(async () => {
                     v-for="camera in filteredCameras"
                     :key="camera.cameraID"
                     @click="selectCamera(camera)"
-                    class=" hover:bg-primary hover:text-primary-content py-2 px-3 rounded-lg cursor-pointer transition-colors"
+                    
+                    class="hover:bg-primary hover:text-primary-content py-2 px-3 rounded-lg cursor-pointer transition-colors w-full"
                     :class="{
-                      'bg-primary/20':
+                      'bg-primary text-primary-content':
                         newAssignment.cameraID === camera.cameraID,
                     }"
                   >
@@ -1233,21 +1291,39 @@ onMounted(async () => {
                           {{ camera.cameraName }}
                         </div>
                       </div>
-                      <svg
-                        v-if="newAssignment.cameraID === camera.cameraID"
-                        xmlns="http://www.w3.org/2000/svg"
-                        class="h-4 w-4 text-primary shrink-0"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                      >
-                        <path
-                          stroke-linecap="round"
-                          stroke-linejoin="round"
-                          stroke-width="2"
-                          d="M5 13l4 4L19 7"
-                        />
-                      </svg>
+
+                      <!-- 👇 เพิ่ม Badge ประเภทกล้อง -->
+                      <div class="flex items-center gap-2 shrink-0">
+                        <div
+                          class="badge badge-sm gap-1"
+                          :class="
+                            getCameraTypeInfo(camera.cameraType || '4G').color
+                          "
+                        >
+                          <span class="text-xs">{{
+                            getCameraTypeInfo(camera.cameraType || "4G").icon
+                          }}</span>
+                          <span class="text-xs font-semibold">{{
+                            getCameraTypeInfo(camera.cameraType || "4G").label
+                          }}</span>
+                        </div>
+
+                        <svg
+                          v-if="newAssignment.cameraID === camera.cameraID"
+                          xmlns="http://www.w3.org/2000/svg"
+                          class="h-4 w-4 shrink-0"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            stroke-width="2"
+                            d="M5 13l4 4L19 7"
+                          />
+                        </svg>
+                      </div>
                     </div>
                   </li>
                   <li v-if="filteredCameras.length === 0">
@@ -1559,5 +1635,24 @@ input[type="checkbox"]:checked {
 
 .table tbody tr:hover {
   background-color: hsl(var(--b2) / 0.5);
+}
+
+/* 👇 เพิ่ม Custom Badge Colors */
+.badge-primary {
+  background-color: #ef4444 !important;
+  color: white !important;
+  border-color: #ef4444 !important;
+}
+
+.badge-info {
+  background-color: #06b6d4 !important;
+  color: white !important;
+  border-color: #06b6d4 !important;
+}
+
+.badge-warning {
+  background-color: #eab308 !important;
+  color: white !important;
+  border-color: #eab308 !important;
 }
 </style>
